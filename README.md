@@ -9,7 +9,7 @@ Simple player for your site
 ### Installing
 
 ```
-npm installl simple-web-player
+npm installl simple-audio-web-player (not yet available)
 ```
 ### Using
 #### Description of using
@@ -47,7 +47,7 @@ The wrapper function takes two arguments: a collection of elements that will bec
 #### NodeJS
 
 ```js
-const {Player} = require('../lib/player.node');
+const {Player} = require('simple-audio-web-player');
 
 const playlist = [
     {
