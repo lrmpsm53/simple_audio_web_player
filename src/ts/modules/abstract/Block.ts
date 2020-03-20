@@ -1,92 +1,131 @@
-interface i_attribute {
-    name: string;
-    value: string;
-}
+type container = HTMLElement| HTMLAudioElement| HTMLImageElement;
 
-interface i_event {
-    name: string;
-    block: HTMLElement|HTMLAudioElement|HTMLImageElement|Document;
-    callback: Function;
-    capture?: boolean;
-}
-
-export interface i_children {
-    [index: string]: Block<HTMLElement | HTMLImageElement | HTMLAudioElement>;
-}
-
-interface i_childrenInstance<T> extends i_children {}
-
-interface i_computedData<K> {
-    [index: string]: any;
-    attributes?: i_attribute[];
-    classes?: string[];
-    events?: i_event[];
-    children?: i_childrenInstance<K>
-}
-
-export interface i_computedDataInstance<T={}, K = {}> extends i_computedData<K>  {}
-
-export abstract class Block <containerType extends HTMLElement> {
-    protected readonly constructor_data: Map<string,any> = new Map;
-    readonly container: containerType;
-    protected classes: string[] = [];
-    children?: i_children;
-    protected attributes?: i_attribute[]|undefined;
-    protected events?: i_event[];
-    protected contextFields: any = {};
-    protected computedContextFields? (): i_computedDataInstance;
-    protected computedFields? (): i_computedDataInstance;
-    protected mounted ? (): void;
-    protected constructorData <type> (propertyName: string, propertyValue?: type): type {
-        if (propertyValue) this.constructor_data.set(propertyName, propertyValue as type)
-        return this.constructor_data.get(propertyName);
+namespace BaseInterfaces {
+    export interface attribute {
+        readonly name: string;
+        readonly value: string;
     }
-    fixData() {
-        const fieldsQuality = (fields: i_computedDataInstance, target: {[index: string]: any}) => {
-            const updateField = <T extends Array<any>|undefined> (fieldPropertyName: string, fieldProperty: T, targetProperty: T) => {
-                    if (fieldProperty && targetProperty) {
-                        fieldProperty.forEach(_class => targetProperty.push(_class));
-                        delete fields[fieldPropertyName];
-                    }
-                }
-            updateField <string[]|undefined> ('classes', fields.classes, target.classes);
-            updateField <i_attribute[]|undefined> ('attributes', fields.attributes, target.attributes);
-            updateField <i_event[]|undefined> ('events', fields.events, target.events);
-            for (let mainField in target) {
-                for (let field in fields) {
-                    if (mainField == field) {
-                        target[mainField] = fields[mainField];
-                        delete fields[mainField];
-                    }       
-                }
-            }
-            for (let field in fields) target[field] = fields[field];
+    export interface event {
+        readonly name: string;
+        readonly block: container | Document;
+        readonly callback: Function;
+        readonly capture?: boolean;
+    }
+    export interface Instance {
+        readonly container: container;
+    }
+    export interface Handler<T> {
+        fix(fields: T, target: T): void;
+        render(instance: Instance & T): void;
+    }
+    export interface Indexable<T> extends ThisType<T> {
+        [index: string]: any;
+    }
+}
+
+export namespace Addons {
+    export interface WithClasses {
+        classes: string[];
+    }
+
+    export interface WithChildren<T extends object = {[index: string]: Block<container>}> {
+        children: T;
+    }
+    export interface WithEvents {
+        events: BaseInterfaces.event[];
+    }
+    export interface WithAttributes {
+        attributes: BaseInterfaces.attribute[];
+    }
+}
+
+export namespace Handlers {
+    export const Attributes: BaseInterfaces.Handler<Addons.WithAttributes> = {
+        fix(fields, target) {
+            fields.attributes.forEach(data => target.attributes.push(data));
+            delete fields.attributes;
+        },
+        render(instance) {
+            instance.attributes.forEach(attr => instance.container.setAttribute(attr.name, attr.value))
         }
-        this.computedFields && fieldsQuality(this.computedFields(), this);
-        this.computedContextFields && fieldsQuality(this.computedContextFields(), this.contextFields);
     }
-    render() {
-        this.attributes && this.attributes.forEach(attr => this.container.setAttribute(attr.name, attr.value));
-        this.classes.forEach (_class => this.container.classList.add(_class));
-        if (this.children) { 
-            for (let child in this.children) {
-                const renderRusult = this.children[child].render();
-                this.container.append(renderRusult.container);
+    export const Classes: BaseInterfaces.Handler<Addons.WithClasses> = {
+        fix(fields, target) {
+            fields.classes.forEach(data => target.classes.push(data));
+            delete fields.classes;
+        },
+        render(instance) {
+            const classesString = instance.classes.reduce((total, _class) => `${total} ${_class}`);
+            instance.container.className = classesString;
+        }
+    }
+    export const Children: BaseInterfaces.Handler<Addons.WithChildren> = {
+        fix(fields, target) {
+            for (let child in fields.children) {
+                target.children[child] = fields.children[child];
+            }
+            delete fields.children;
+        },
+        render(instance) {
+            for (let child in instance.children) {
+                const renderRusult = instance.children[child].render();
+                instance.container.append(renderRusult.container);
                 setTimeout(() => renderRusult.mounted(), 0);
             }
         }
-        this.events && this.events.forEach (
-            (event: i_event) =>
-                event.block.addEventListener(event.name, event.callback.bind(this.contextFields), event.capture)
-        );
+    }
+    export const Events: BaseInterfaces.Handler<Addons.WithEvents> = {
+        fix(fields, target) {
+            fields.events.forEach(data => target.events.push(data));
+            delete fields.events;
+        },
+        render(instance) {
+            instance.events.forEach (event => event.block.addEventListener(
+                event.name,
+                event.callback.bind(instance),
+                event.capture
+            )) 
+        }
+    }
+}
+
+export abstract class Block <containerType extends container> {
+    readonly container: containerType;
+    protected renders: Function[] = [];
+    mounted?(): void;
+    constructor (container: containerType | string) {
+        typeof container == 'string'
+        ? this.container = document.createElement(container as string) as containerType
+        : this.container = container as containerType;
+    }
+    render() {
+        this.renders.forEach(render => render(this));
         return {
             container: this.container,
             mounted: this.mounted ? this.mounted.bind(this) : new Function
         }
     }
-    constructor (container: containerType | string) {
-        typeof container == 'string'
-        ? this.container = document.createElement(container as string) as containerType
-        : this.container = container as containerType;
+}
+
+export abstract class BlockWithComputingData<T extends container, K> extends Block<T> {
+    protected abstract computedFields(): K;
+    protected readonly constructor_data: Map<string,any> = new Map;
+    protected constructorData <type> (propertyName: string, propertyValue?: type): type {
+        propertyValue && this.constructor_data.set(propertyName, propertyValue)
+        return this.constructor_data.get(propertyName);
+    }
+    fixData(...fixers: Function[]) {
+        const computed = this.computedFields() as BaseInterfaces.Indexable<K>;
+        fixers.forEach(fixer => fixer(computed, this));
+        const _this = this as unknown as BaseInterfaces.Indexable<this>;
+        for (let field in computed) {
+            for (let thisField in _this) {
+                if (field == thisField) {
+                    _this[thisField] = computed[field];
+                    delete computed[field];
+                }
+            }
+        }
+        for (let field in computed) _this[field] = computed[field];
     }
 }

@@ -1,15 +1,15 @@
-import {Button, i_ButtonContext} from './abstract/Button';
-import {Bar, i_BarContext} from './abstract/Bar';
-import {Block, i_computedDataInstance, i_children} from './abstract/Block';
+import {Button, ButtonComputed} from './abstract/Button';
+import Bar from './abstract/Bar';
+import {Block, Addons, Handlers, BlockWithComputingData} from './abstract/Block';
 import {interfaceIcons} from './Icons';
-import {PlayerContainer} from './PlayerContainer';
+import type {PlayerContainer} from './PlayerContainer';
 
-class Controls__VolumeBar extends Bar {
+class Controls__VolumeBar extends Bar<Addons.WithClasses> {
     constructor(AudioBlock: Block<HTMLAudioElement>) {
         super(AudioBlock.container);
-        this.fixData();
+        this.fixData(Handlers.Classes.fix);
     }
-    computedFields() {
+    computedFields(): Addons.WithClasses {
         return {
             classes: ['sc---controls__volume-bar']
         }
@@ -17,33 +17,30 @@ class Controls__VolumeBar extends Bar {
     protected getNewMousemovePosition (event: MouseEvent = new MouseEvent('mousemove')) {
         const context = super.getNewMousemovePosition (event);
         if (context) {
-            const {value: value, _this: _this} = context;
+            const {value: value, this: _this} = context;
             _this.AudioBlock.volume = value;
         }
     }
     mounted () {
-        super.calculateValue(0.5, this.contextFields as unknown as i_BarContext);
-        this.contextFields.AudioBlock.volume = 0.5;
+        super.calculateValue(0.5);
+        this.AudioBlock.volume = 0.5;
     }
-}
-
-interface i_PlayPauseContext {
-    isPlay:boolean;
-    AudioBlock: Block<HTMLAudioElement>;
-    super_changeIcon: (icon: string) => void;
 }
 
 class Controls__PausePlay extends Button {
-    contextFields = {} as i_ButtonContext<i_PlayPauseContext> | i_PlayPauseContext; 
+    isPlay = false;
+    AudioBlock: Block<HTMLAudioElement>;
+    renders = [Handlers.Attributes.render, Handlers.Classes.render, Handlers.Events.render];
     constructor(icons: {pause: string; play: string}, AudioBlock: Block<HTMLAudioElement>) {
         super(icons);
-        this.constructorData <Block<HTMLAudioElement>> ('AudioBlock', AudioBlock);
-        this.fixData();
-        super.changeIcon ('play', this.contextFields as i_ButtonContext<i_PlayPauseContext>);
+        this.AudioBlock = AudioBlock;
+        this.fixData(Handlers.Classes.fix);
+        super.changeIcon ('play');
     }
-    computedFields() {
-        return Object.assign (
-            super.computedFields(),
+    computedFields(): ButtonComputed & Addons.WithEvents & Addons.WithClasses {
+        const _super = super.computedFields();
+        return Object.assign(
+            _super, 
             {
                 events: [
                     {
@@ -53,7 +50,7 @@ class Controls__PausePlay extends Button {
                     },
                     {
                         name: 'ended',
-                        block: this.constructorData <Block<HTMLAudioElement>> ('AudioBlock').container,
+                        block: this.AudioBlock.container,
                         callback: this.changeIconWhenEndedTrack
                     }
                 ],
@@ -61,84 +58,62 @@ class Controls__PausePlay extends Button {
             }
         )
     }
-    computedContextFields() {
-        return Object.assign (
-            super.computedContextFields(),
-            {
-                isPlay: false,
-                AudioBlock: this.constructorData <Block<HTMLAudioElement>> ('AudioBlock'),
-                super_changeIcon: super.changeIcon
-            }
-        )
-    }
-    private changeIconWhenEndedTrack(this: i_PlayPauseContext) {
-        this.super_changeIcon('play');
+    private changeIconWhenEndedTrack() {
+        super.changeIcon('play');
         this.isPlay = false;
     }
-    public changeIcon (this: i_PlayPauseContext) {
+    public changeIcon () {
         if (this.isPlay) {
-            this.super_changeIcon('play');
+            super.changeIcon('play');
             this.AudioBlock.container.pause();
             this.isPlay = false;
         }
         else {
-            this.super_changeIcon('pause');
+            super.changeIcon('pause');
             this.AudioBlock.container.play();
             this.isPlay = true;
         }
     }
 }
 
-interface i_swichTrackContext {
-    root: PlayerContainer;
+class Controls__SwichTrack extends Button implements Addons.WithEvents {
     k: 1|-1;
+    root: PlayerContainer;
     parent: Controls;
-}
-
-class Controls__SwichTrack extends Button {
     events = [{
             name: 'click',
             block: this.container,
             callback: this.swichTrack
     }]
+    renders = [Handlers.Attributes.render, Handlers.Classes.render, Handlers.Events.render];
     constructor(icon: string, k: 1|-1, alt: string, root: PlayerContainer, parent: Controls) {
         super(icon, alt);
-        this.constructorData <PlayerContainer> ('root', root);
-        this.constructorData <1|-1> ('k', k);
-        this.constructorData <Controls> ('parent', parent);
-        this.fixData();
+        this.root = root;
+        this.k = k;
+        this.parent = parent;
+        this.fixData(Handlers.Attributes.fix);
     }
-    computedContextFields () {
-        return Object.assign (
-            super.computedContextFields(),
-            {
-                root: this.constructorData <PlayerContainer> ('root'),
-                k: this.constructorData <1|-1> ('k'),
-                parent: this.constructorData <Controls> ('parent'),
-            }
-        )
-    }
-    swichTrack(this: i_swichTrackContext) {
+    swichTrack() {
         this.root.swichTrack(this.k);
-        const PausePlay = (this.parent.children?.Controls__PausePlay as Controls__PausePlay)
-        PausePlay.contextFields.isPlay = !PausePlay.contextFields.isPlay;
-        PausePlay.changeIcon.call(PausePlay.contextFields as i_PlayPauseContext);   
+        const PausePlay = ((this.parent.children as i_ControlsChildren).Controls__PausePlay as Controls__PausePlay)
+        PausePlay.isPlay = !PausePlay.isPlay;
+        PausePlay.changeIcon.call(PausePlay);   
     }
 }
 
 class Controls__Border extends Block<HTMLImageElement> {
-    constructor() {
-        super('img');
-        this.fixData();
-    }
     attributes = [{
-            name: 'src',
-            value: require('../../../icons/border.svg')
+        name: 'src',
+        value: require('../../../icons/border.svg')
     }]
     classes = ['sc---classes__border'];
+    renders = [Handlers.Classes.render, Handlers.Attributes.render];
+    constructor() {
+        super('img');
+    }
 }
 
-interface i_ControlsChildren extends i_children {
+interface i_ControlsChildren {
     Controls__Border1: Controls__Border;
     Controls__Back: Controls__SwichTrack;
     Controls__Border2: Controls__Border;
@@ -150,16 +125,20 @@ interface i_ControlsChildren extends i_children {
     Controls__Border5: Controls__Border;
 }
 
-export class Controls extends Block<HTMLElement> {
+export class Controls 
+    extends BlockWithComputingData<HTMLElement, Addons.WithChildren<i_ControlsChildren>> 
+    implements Addons.WithChildren, Addons.WithClasses {
+    children = {};
     classes = ['sc---controls', 'sc---row', 'sc---row_middle-children'];
+    renders = [Handlers.Classes.render, Handlers.Children.render];
     constructor(icons: interfaceIcons, AudioBlock: Block<HTMLAudioElement>, root: PlayerContainer) {
         super('div');
         this.constructorData <interfaceIcons> ('iconsTheme', icons);
         this.constructorData <Block<HTMLAudioElement>> ('AudioBlock', AudioBlock);
         this.constructorData <PlayerContainer> ('root', root);
-        this.fixData();
+        this.fixData(Handlers.Children.fix);
     }
-    computedFields(): i_computedDataInstance<i_ControlsChildren> {
+    computedFields() {
         return {
             children: {
                 Controls__Border1: new Controls__Border,

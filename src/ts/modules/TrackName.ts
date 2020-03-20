@@ -1,21 +1,21 @@
-import {Block} from './abstract/Block';
+import {Block, Addons, Handlers} from './abstract/Block';
 
-class TrackName__Name extends Block<HTMLElement> {
+class TrackName__Name extends Block<HTMLElement> implements Addons.WithClasses {
     classes = ['sc---track-name__name'];
+    renders = [Handlers.Classes.render];
     constructor() {
         super('span');
-        this.fixData();
     }
 }
 
-export class TrackName extends Block<HTMLElement> {
+export class TrackName extends Block<HTMLElement> implements Addons.WithClasses, Addons.WithChildren {
     classes = ['sc---row', 'sc---row_middle-children', 'sc---track-name'];
+    renders = [Handlers.Classes.render, Handlers.Children.render];
     children = {
         TrackName__Name: new TrackName__Name
     }
     constructor() {
         super('h3');
-        this.fixData();
     }
     updateName(trackName: string) {
         this.children.TrackName__Name.container.textContent = trackName;

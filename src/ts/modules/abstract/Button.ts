@@ -1,16 +1,16 @@
-import {Block, i_computedDataInstance} from './Block';
-
-interface inputContext <T> {};
-export interface i_ButtonContext<T=Button> extends inputContext<T> {
-    iconStates: Map<string, string>;
-    container: HTMLImageElement;
-    [property: string]: any;
-};
+import {BlockWithComputingData, Addons} from './Block';
 
 type t_iconSource<other = {[index: string]: string|object}> = {[index: string]: string|object} | other;
 
-export abstract class Button extends Block<HTMLImageElement> {
-    protected classes = ['sc---button'];
+export type ButtonComputed = Addons.WithAttributes;
+
+export abstract class Button 
+    extends BlockWithComputingData<HTMLImageElement, ButtonComputed> 
+    implements Addons.WithClasses, Addons.WithAttributes
+{
+    readonly classes = ['sc---button'];
+    attributes = [];
+    protected iconStates: Map<string, string> = new Map;
     constructor(iconSource: t_iconSource<string>, alt: string = '') {
         super('img');
         this.constructorData <t_iconSource<string>> ('iconSource', iconSource);
@@ -21,38 +21,29 @@ export abstract class Button extends Block<HTMLImageElement> {
             name: 'alt',
             value: this.constructorData <string> ('alt')   
         }
-        const fields: i_computedDataInstance = (() => {
-            switch (typeof this.constructorData <t_iconSource<string>> ('iconSource')) {
-                case 'string': return {
+        let fields: Addons.WithAttributes;
+        switch (typeof this.constructorData <t_iconSource<string>> ('iconSource')) {
+            case 'string': fields = {
                     attributes: [{
                         name: 'src', 
                         value: this.constructorData <string> ('iconSource')
-                    }]
+                    }] 
                 }
-                default: return new Object;
-            }
-        })();
-        if (fields.attributes) fields.attributes.push(alt)
-        else fields.attributes = [alt];
+                fields.attributes.push(alt);
+                break;
+                case 'object': fields = {attributes: [alt]};
+                    this
+                    .initIconStates(this.constructorData <{[index: string]: string}> ('iconSource'))
+                    .forEach (state => this.iconStates.set(state[0], state[1]));
+                break;
+        }
         return fields;
     }
-    computedContextFields(): i_ButtonContext {
-        const iconStates = () => {
-            switch (typeof this.constructorData <t_iconSource> ('iconSource')) {
-                case 'object': 
-                    return {
-                        iconStates: new Map(this.initIconStates(this.constructorData <{[index: string]: string}> ('iconSource')))
-                }
-                default: return new Object;
-            }
-        }
-        return Object.assign (iconStates(), {container: this.container}) as i_ButtonContext;
-    }
-    protected initIconStates(icons: {[index: string]: string}): Iterable<[string, string]> {
+    protected initIconStates(icons: {[index: string]: string}): [string, string][] {
         const  keys = Object.keys(icons);
-        return keys.map(key => [key, icons[key]])
+        return keys.map(key => [key, icons[key]]);
     }
-    protected changeIcon (iconId: string, _this = this as unknown as i_ButtonContext) {
-        _this.container.src = _this.iconStates.get(iconId) as string;
+    protected changeIcon (iconId: string) {
+        this.container.src = this.iconStates.get(iconId) as string;
     }
 }
