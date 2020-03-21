@@ -1,60 +1,37 @@
-import {Block} from './Block';
+import {Block, Addons, BlockWithComputingData, Handlers} from './Block';
 
-export interface i_BarContext {
-    container: HTMLElement;
-    changeValue: (value1: number, value2: number) => void;
-    calculateValue: (value: number) => i_returnedValues|void;
-    children: {
-        Roller: Bar__Roller;
-        State: Bar__State;
-    }
-    isMoving: boolean;
-    AudioBlock:HTMLAudioElement;
-}
-
-interface i_returnedValues {
-    value: number;
-    _this: i_BarContext;
-}
-
-class Bar__Roller extends Block<HTMLElement> {
+class Bar__Roller extends Block<HTMLElement> implements Addons.WithClasses {
     classes = ['sc---bar__roller'];
+    renders = [Handlers.Classes.render];
     constructor() {
         super('div');
-        this.fixData();
     }
-    computedContextFields() {
-        return {
-            container: this.container
-        }
-    }
-    updatePosition(value: number, _this = this as unknown as {container: HTMLElement}) {
-        _this.container.style.left = `${value*100}%`;
+    updatePosition(value: number) {
+        this.container.style.left = `${value*100}%`;
     }
 }
 
-class Bar__State extends Block<HTMLElement> {
+class Bar__State extends Block<HTMLElement> implements Addons.WithClasses {
     classes = ['sc---bar__state'];
+    renders = [Handlers.Classes.render];
     constructor() {
         super('div');
-        this.fixData();
     }
-    computedContextFields() {
-        return {
-            container: this.container
-        }
-    }
-    updateState(value: number, _this = this as unknown as {container: HTMLElement}) {
-        _this.container.style.width = `${value*100}%`;
+    updateState(value: number) {
+        this.container.style.width = `${value*100}%`;
     }
 }
 
-export abstract class Bar extends Block<HTMLElement> {
+type BarImplementation = Addons.WithClasses & Addons.WithEvents & Addons.WithChildren;
+
+export default abstract class Bar<T extends object> 
+    extends BlockWithComputingData<HTMLElement, T> 
+    implements BarImplementation 
+{
     classes = ['sc---bar'];
-    constructor(AudioBlock: HTMLAudioElement) {
-        super('div');
-        this.constructorData <HTMLAudioElement> ('AudioBlock', AudioBlock);
-    }
+    AudioBlock: HTMLAudioElement;
+    isMoving = false;
+    renders = [Handlers.Classes.render, Handlers.Children.render, Handlers.Events.render];
     children = {
         Roller: new Bar__Roller,
         State: new  Bar__State
@@ -85,34 +62,27 @@ export abstract class Bar extends Block<HTMLElement> {
             capture: true
         }
     ]
-    protected anableMoving(event?: MouseEvent,_this = this as unknown as i_BarContext) {
-        _this.isMoving = !_this.isMoving;
+    constructor(AudioBlock: HTMLAudioElement) {
+        super('div');
+        this.AudioBlock = AudioBlock;
     }
-    protected disableMoving(event?: MouseEvent,_this = this as unknown as i_BarContext) {
-        _this.isMoving = false;
+    protected anableMoving() {
+        this.isMoving = true;
     }
-    computedContextFields(): i_BarContext {
-        return {
-            container: this.container,
-            changeValue: this.changeValue,
-            calculateValue: this.calculateValue,
-            children: this.children,
-            isMoving: false,
-            AudioBlock: this.constructorData('AudioBlock')
-        }
+    protected disableMoving() {
+        this.isMoving = false;
     }
-    protected changeValue (newValueState: number, newValueRoller: number, _this = this as unknown as i_BarContext) {
-        _this.children.State.updateState(newValueState);
-        _this.children.Roller.updatePosition(newValueRoller);
+    protected changeValue (newValueState: number, newValueRoller: number) {
+        this.children.State.updateState(newValueState);
+        this.children.Roller.updatePosition(newValueRoller);
     }
-    protected getNewMousemovePosition(event: MouseEvent) {
-        const _this = this as unknown as i_BarContext;
-        const positionOfContainer = Math.floor(_this.container.getBoundingClientRect().left);
+    protected getNewMousemovePosition(event: MouseEvent): {value: number; this: Bar<T>} | void {
+        const positionOfContainer = Math.floor(this.container.getBoundingClientRect().left);
         const newPosition = event.clientX - positionOfContainer;
-        if (_this.isMoving && newPosition) return _this.calculateValue(newPosition);
+        if (this.isMoving && newPosition) return this.calculateValue(newPosition);
     }
-    protected calculateValue (relative: number, _this = this as unknown as i_BarContext) {
-        const widthOfContainer = Math.floor(_this.container.clientWidth);
+    protected calculateValue (relative: number) {
+        const widthOfContainer = Math.floor(this.container.clientWidth);
         let newValueState: number;
         if (relative < 1) {
             newValueState = relative;
@@ -122,10 +92,10 @@ export abstract class Bar extends Block<HTMLElement> {
         const rollerRadius = 10;
         if (0 <= newValueState && newValueState <= 1) {
             const newValueRoller = (relative - rollerRadius) / widthOfContainer;
-            _this.changeValue(newValueState, newValueRoller);
+            this.changeValue(newValueState, newValueRoller);
             return {
                 value: newValueState, 
-                _this: _this
+                this: this
             }
         } 
     }
