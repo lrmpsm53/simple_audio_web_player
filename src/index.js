@@ -1,6 +1,5 @@
 import './index.html';
-//import Player from './ts/index.ts';
-const {Player} = require('../lib/player.node');
+import Player from './ts/index.ts';
 
 const playlist = [
     {
