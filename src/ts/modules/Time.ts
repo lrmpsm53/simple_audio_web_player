@@ -1,4 +1,4 @@
-import {BlockWithComputingData, Block, Addons, Handlers} from './abstract/Block';
+import {BlockWithComputingData, Block, Addons, Handlers} from './abstract/Abstract';
 
 export default class Time 
 extends BlockWithComputingData<HTMLElement, Addons.WithEvents> 

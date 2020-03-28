@@ -7,7 +7,7 @@ namespace BaseInterfaces {
     }
     export interface event {
         readonly name: string;
-        readonly block: container | Document;
+        readonly block: container | Document | Window;
         readonly callback: Function;
         readonly capture?: boolean;
     }
@@ -25,7 +25,7 @@ namespace BaseInterfaces {
 
 export namespace Addons {
     export interface WithClasses {
-        classes: string[];
+        classes: string[]|Streams.Classes;
     }
 
     export interface WithChildren<T extends object = {[index: string]: Block<container>}> {
@@ -84,7 +84,25 @@ export namespace Handlers {
                 event.name,
                 event.callback.bind(instance),
                 event.capture
-            )) 
+            ));
+        }
+    }
+}
+
+export namespace Streams {
+    export class Classes extends Array<string> {
+        private classList: DOMTokenList
+        constructor(classes: string[], container: container) {
+            super(...classes);
+            this.classList = container.classList;
+        }
+        push = (_class: string) => {
+            this.classList.add(_class);
+            return super.push(_class);
+        }
+        pop = () => {
+            this.classList.remove(this.classList[this.classList.length-1]);
+            return super.pop();
         }
     }
 }

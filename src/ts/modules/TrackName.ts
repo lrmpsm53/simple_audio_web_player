@@ -1,4 +1,4 @@
-import {Block, Addons, Handlers} from './abstract/Block';
+import {Block, Addons, Handlers} from './abstract/Abstract';
 
 class TrackName__Name extends Block<HTMLElement> implements Addons.WithClasses {
     classes = ['sc---track-name__name'];

@@ -1,4 +1,4 @@
-import {BlockWithComputingData, Addons} from './Block';
+import {BlockWithComputingData, Addons} from './Abstract';
 
 type t_iconSource<other = {[index: string]: string|object}> = {[index: string]: string|object} | other;
 

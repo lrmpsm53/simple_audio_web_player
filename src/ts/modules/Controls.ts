@@ -1,6 +1,6 @@
 import {Button, ButtonComputed} from './abstract/Button';
 import Bar from './abstract/Bar';
-import {Block, Addons, Handlers, BlockWithComputingData} from './abstract/Block';
+import {Block, Addons, Handlers, BlockWithComputingData} from './abstract/Abstract';
 import {interfaceIcons} from './Icons';
 import type {PlayerContainer} from './PlayerContainer';
 
@@ -9,12 +9,15 @@ class Controls__VolumeBar extends Bar<Addons.WithClasses> {
         super(AudioBlock.container);
         this.fixData(Handlers.Classes.fix);
     }
-    computedFields(): Addons.WithClasses {
-        return {
-            classes: ['sc---controls__volume-bar']
-        }
+    computedFields() {
+        return Object.assign(
+            super.computedFields(),
+            {
+                classes: ['sc---controls__volume-bar']
+            }
+        )
     }
-    protected getNewMousemovePosition (event: MouseEvent = new MouseEvent('mousemove')) {
+    protected getNewMousemovePosition (event: MouseEvent) {
         const context = super.getNewMousemovePosition (event);
         if (context) {
             const {value: value, this: _this} = context;
@@ -106,7 +109,7 @@ class Controls__Border extends Block<HTMLImageElement> {
         name: 'src',
         value: require('../../../icons/border.svg')
     }]
-    classes = ['sc---classes__border'];
+    classes = ['sc---controls__border'];
     renders = [Handlers.Classes.render, Handlers.Attributes.render];
     constructor() {
         super('img');
