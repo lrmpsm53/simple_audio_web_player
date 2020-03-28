@@ -4,11 +4,11 @@ import Player from './ts/index.ts';
 const playlist = [
     {
         name: 'We Are The Champions',
-        source: '../assets/audio/audio1.mp3'
+        source: '../audio/audio1.mp3'
     },
     {
         name: 'I Want To Break Free',
-        source: '../assets/audio/audio2.mp3'
+        source: '../audio/audio2.mp3'
     }
 ];
 
