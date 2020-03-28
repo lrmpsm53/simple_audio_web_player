@@ -1,13 +1,35 @@
-import {Block, Addons, BlockWithComputingData, Handlers} from './Block';
+import {Block, Addons, BlockWithComputingData, Handlers} from './Abstract';
 
-class Bar__Roller extends Block<HTMLElement> implements Addons.WithClasses {
+class Bar__Roller extends Block<HTMLElement> implements Addons.WithClasses, Addons.WithEvents {
+    private get rollerRadius() {
+        return this.container.offsetWidth / 2
+    };
+    private get parentWidth() {
+        return (this.parentContainer as HTMLElement).offsetWidth;
+    };
+    private parentContainer?: HTMLElement;
+    private beforePositionRelative?: number;
+    events = [
+        {
+            name: 'resize',
+            block: window,
+            callback: () => setTimeout(() => this.updatePosition(), 0)
+        }
+    ]
     classes = ['sc---bar__roller'];
-    renders = [Handlers.Classes.render];
-    constructor() {
+    renders = [Handlers.Classes.render, Handlers.Events.render];
+    constructor(parentContainer: HTMLElement) {
         super('div');
+        this.parentContainer = parentContainer;
     }
-    updatePosition(value: number) {
-        this.container.style.left = `${value*100}%`;
+    updatePosition(_arguments?: { relative: number; widthOfContainer: number;}) {
+        if (_arguments) this.beforePositionRelative = _arguments.relative / _arguments.widthOfContainer;
+        if (this.beforePositionRelative) {
+            const absolutePosition = this.parentWidth * this.beforePositionRelative;
+            const absolutePositionWithoutRollerRadius = absolutePosition - this.rollerRadius;
+            const relativePositionWithoutRollerradius = absolutePositionWithoutRollerRadius / this.parentWidth * 100;
+            this.container.style.left = `${relativePositionWithoutRollerradius}%`;
+        }
     }
 }
 
@@ -24,18 +46,20 @@ class Bar__State extends Block<HTMLElement> implements Addons.WithClasses {
 
 type BarImplementation = Addons.WithClasses & Addons.WithEvents & Addons.WithChildren;
 
+interface BarChildren {
+        Roller: Bar__Roller;
+        State: Bar__State;
+}
+
 export default abstract class Bar<T extends object> 
-    extends BlockWithComputingData<HTMLElement, T> 
-    implements BarImplementation 
+    extends BlockWithComputingData<HTMLElement, T | {children: BarChildren}>
+    implements BarImplementation
 {
     classes = ['sc---bar'];
+    children = {};
     AudioBlock: HTMLAudioElement;
     isMoving = false;
     renders = [Handlers.Classes.render, Handlers.Children.render, Handlers.Events.render];
-    children = {
-        Roller: new Bar__Roller,
-        State: new  Bar__State
-    }
     events = [
         {
             name: 'mousemove',
@@ -62,6 +86,14 @@ export default abstract class Bar<T extends object>
             capture: true
         }
     ]
+    computedFields() {
+        return {
+            children: {
+                Roller: new Bar__Roller(this.container),
+                State: new  Bar__State
+            }
+        }
+    }
     constructor(AudioBlock: HTMLAudioElement) {
         super('div');
         this.AudioBlock = AudioBlock;
@@ -71,10 +103,6 @@ export default abstract class Bar<T extends object>
     }
     protected disableMoving() {
         this.isMoving = false;
-    }
-    protected changeValue (newValueState: number, newValueRoller: number) {
-        this.children.State.updateState(newValueState);
-        this.children.Roller.updatePosition(newValueRoller);
     }
     protected getNewMousemovePosition(event: MouseEvent): {value: number; this: Bar<T>} | void {
         const positionOfContainer = Math.floor(this.container.getBoundingClientRect().left);
@@ -87,12 +115,11 @@ export default abstract class Bar<T extends object>
         if (relative < 1) {
             newValueState = relative;
             relative = relative * widthOfContainer;
-        }
-        else newValueState = relative / widthOfContainer;
-        const rollerRadius = 10;
-        if (0 <= newValueState && newValueState <= 1) {
-            const newValueRoller = (relative - rollerRadius) / widthOfContainer;
-            this.changeValue(newValueState, newValueRoller);
+        } else newValueState = relative / widthOfContainer;
+        if (0 < newValueState && newValueState < 1) {
+            const children = this.children as BarChildren;
+            children.State.updateState(newValueState);
+            children.Roller.updatePosition({relative: relative, widthOfContainer: widthOfContainer});
             return {
                 value: newValueState, 
                 this: this
