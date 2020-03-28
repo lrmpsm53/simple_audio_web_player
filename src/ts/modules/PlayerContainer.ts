@@ -1,5 +1,5 @@
 import {Icons, interfaceIcons} from './Icons';
-import {BlockWithComputingData, Block, Addons, Handlers} from './abstract/Block';
+import {BlockWithComputingData, Block, Addons, Handlers, Streams} from './abstract/Abstract';
 import {Controls} from './Controls';
 import {TrackName} from './TrackName';
 import Time from './Time';
@@ -12,14 +12,17 @@ class PlayerContainer__ProgressBar extends Bar<Addons.WithClasses & Addons.WithE
         this.fixData(Handlers.Classes.fix, Handlers.Events.fix);
     }
     computedFields() {
-        return {
-            classes: ['sc---progress-bar'],
-            events: [{
-                name: 'timeupdate',
-                block: this.constructorData <HTMLElement> ('AudioBlock'),
-                callback: this.updateProgress
-            }]
-        }
+        return Object.assign(
+            super.computedFields(),
+            {
+                classes: ['sc---progress-bar'],
+                events: [{
+                    name: 'timeupdate',
+                    block: this.constructorData <HTMLElement> ('AudioBlock'),
+                    callback: this.updateProgress
+                }]
+            }
+        )
     }
     getNewMousemovePosition(event: MouseEvent) {
         const context = super.getNewMousemovePosition(event);
@@ -72,14 +75,25 @@ export class PlayerContainer
 {
     private trackNumer: number = 0;
     private playlist: i_track[] = [];
-    classes = ['sc---row', 'sc---row_middle-children', 'sc---player'];
+    classes = new Streams.Classes(
+        ['sc---row', 'sc---row_middle-children', 'sc---player'], 
+        this.container
+    );
+    private currentSizesSum = 0;
+    private sizes = [375, 600, 800, 1024, 1280, 1440, 1680, 1920];
     children = {};
-    renders = [Handlers.Children.render, Handlers.Classes.render];
+    events = [{
+        name: 'resize',
+        block: window,
+        callback: this.updateSize
+    }]
+    renders = [Handlers.Children.render, Handlers.Classes.render, Handlers.Events.render];
     constructor(root: HTMLElement, iconsThemeName: string, tracks: i_track[]) {
         super(root);
         this.constructorData <interfaceIcons> ('icons', new Icons(iconsThemeName));
         this.constructorData <i_track[]>('tracks', tracks);
         this.fixData(Handlers.Children.fix);
+        this.updateSize();
         this.swichTrack(0);
     }
     computedFields() {
@@ -94,6 +108,26 @@ export class PlayerContainer
                 Player__ProgressBar: new PlayerContainer__ProgressBar (cache.container),
                 Player__TimeLeft: new Time ('left', cache.container),
             }
+        }
+    }
+    updateSize() {
+        if (this.currentSizesSum != 0) {
+            for (let i = 1; i <= this.currentSizesSum; i++) this.classes.pop();
+        }
+        const currentSize = this.container.offsetWidth;
+        const result = this.sizes.reduce((total, elem) => {
+            if (elem >= currentSize) {
+                total.push(elem);
+                return total;
+            } else return total;
+        }, new Array);
+        if(result.length == 0) {
+            this.currentSizesSum = 1;
+            this.classes.push(`_${this.sizes[this.sizes.length-1]}px`);
+        }
+        else {
+            this.currentSizesSum = result.length;
+            result.forEach(elem => this.classes.push(`_${elem}px`));
         }
     }
     swichTrack(trackNumerKey: number) {
