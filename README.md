@@ -2,7 +2,7 @@
 
 Simple player for your site
 ## Version
-**0.3.0** . Recommended for reference only. Stay tuned
+**0.4.0** . Recommended for reference only. Stay tuned
 
 
 ## Getting Started
@@ -67,7 +67,7 @@ Player (
 ```
 
 ## Decription
-This small script (25.9 kb) will generate an audio player on your web page. The package includes icons and css. 
+This small script (25.6 kb) will generate an audio player on your web page. The package includes icons and css. 
 
 **Internet explorer 11 is unsupported**
 
