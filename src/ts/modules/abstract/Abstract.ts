@@ -1,149 +1,124 @@
-type container = HTMLElement| HTMLAudioElement| HTMLImageElement;
-
-namespace BaseInterfaces {
-    export interface attribute {
-        readonly name: string;
-        readonly value: string;
-    }
-    export interface event {
-        readonly name: string;
-        readonly block: container | Document | Window;
-        readonly callback: Function;
-        readonly capture?: boolean;
-    }
-    export interface Instance {
-        readonly container: container;
-    }
-    export interface Handler<T> {
-        fix(fields: T, target: T): void;
-        render(instance: Instance & T): void;
-    }
-    export interface Indexable<T> extends ThisType<T> {
-        [index: string]: any;
-    }
-}
-
-export namespace Addons {
-    export interface WithClasses {
-        classes: string[]|Streams.Classes;
-    }
-
-    export interface WithChildren<T extends object = {[index: string]: Block<container>}> {
-        children: T;
-    }
-    export interface WithEvents {
-        events: BaseInterfaces.event[];
-    }
-    export interface WithAttributes {
-        attributes: BaseInterfaces.attribute[];
-    }
-}
-
-export namespace Handlers {
-    export const Attributes: BaseInterfaces.Handler<Addons.WithAttributes> = {
-        fix(fields, target) {
-            fields.attributes.forEach(data => target.attributes.push(data));
-            delete fields.attributes;
-        },
-        render(instance) {
-            instance.attributes.forEach(attr => instance.container.setAttribute(attr.name, attr.value))
-        }
-    }
-    export const Classes: BaseInterfaces.Handler<Addons.WithClasses> = {
-        fix(fields, target) {
-            fields.classes.forEach(data => target.classes.push(data));
-            delete fields.classes;
-        },
-        render(instance) {
-            const classesString = instance.classes.reduce((total, _class) => `${total} ${_class}`);
-            instance.container.className = classesString;
-        }
-    }
-    export const Children: BaseInterfaces.Handler<Addons.WithChildren> = {
-        fix(fields, target) {
-            for (let child in fields.children) {
-                target.children[child] = fields.children[child];
-            }
-            delete fields.children;
-        },
-        render(instance) {
-            for (let child in instance.children) {
-                const renderRusult = instance.children[child].render();
-                instance.container.append(renderRusult.container);
-                setTimeout(() => renderRusult.mounted(), 0);
-            }
-        }
-    }
-    export const Events: BaseInterfaces.Handler<Addons.WithEvents> = {
-        fix(fields, target) {
-            fields.events.forEach(data => target.events.push(data));
-            delete fields.events;
-        },
-        render(instance) {
-            instance.events.forEach (event => event.block.addEventListener(
-                event.name,
-                event.callback.bind(instance),
-                event.capture
-            ));
-        }
-    }
-}
+type TContainer = HTMLElement| HTMLAudioElement| HTMLImageElement;
 
 export namespace Streams {
     export class Classes extends Array<string> {
         private classList: DOMTokenList
-        constructor(classes: string[], container: container) {
+        constructor(context: Block<TContainer>, ...classes: string[]) {
             super(...classes);
-            this.classList = container.classList;
+            this.classList = context.container.classList;
+            classes.forEach(_class => this.addClass(_class))
         }
+        private addClass = (_class: string) => this.classList.add(_class);
+        private removeClass = (_class: string) => this.classList.remove(_class);
         push = (_class: string) => {
-            this.classList.add(_class);
+            this.addClass(_class);
             return super.push(_class);
         }
         pop = () => {
-            this.classList.remove(this.classList[this.classList.length-1]);
+            this.removeClass(this.classList[this.classList.length-1]);
             return super.pop();
         }
     }
+
+    type TEvent = {
+        readonly name: string;
+        readonly block: TContainer | Document | Window;
+        readonly callback: Function;
+        readonly capture?: boolean;
+    }
+
+    export class Events<T> extends Array<TEvent> {
+        private _this: T;
+        constructor(_this: T, ...events: TEvent[]) {
+            super(...events);
+            this._this = _this;
+            events.forEach (event => this.addEvent.call(_this, event));
+        }
+        private addEvent = (event: TEvent) => {
+            event.block.addEventListener(event.name, event.callback.bind(this._this), event.capture);
+        }
+        private removeEvent(event: TEvent) {
+            event.block.removeEventListener(event.name, event.callback.bind(this._this), event.capture);
+        }
+        push = (event: TEvent) => {
+            this.addEvent(event);
+            return super.push(event);
+        }
+        pop = () => {
+            this.removeEvent(this[this.length-1]);
+            return super.pop();
+        }
+    }
+
+    type TAttribute = {
+        readonly name: string;
+        readonly value: string;
+    }
+
+    export class Attributes extends Array<TAttribute> {
+        private container: TContainer;
+        constructor(context: Block<TContainer>, ...attributes: TAttribute[]) {
+            super(...attributes);
+            this.container = context.container;
+            attributes.forEach(attribute => this.addAttribute(attribute));
+        }
+        private addAttribute = (attribute: TAttribute) => {
+            this.container.setAttribute(attribute.name, attribute.value);
+        }
+        private removeAttribute = (attribute: TAttribute) => {
+            this.container.removeAttribute(attribute.value);
+        }
+        push = (attribute: TAttribute) => {
+            this.addAttribute(attribute);
+            return super.push(attribute);
+        }
+        pop = () => {
+            this.removeAttribute(this[this.length-1]);
+            return super.pop();
+        }
+    }
+
+    export class Children<T extends {[index: string]: Block<TContainer> & {children?: Streams.Children}} = {}> {
+        private blocks: T;
+        private container: TContainer;
+        private context: Block<TContainer> & {children?: Streams.Children};
+        constructor(context: Block<TContainer>, blocks: T) {
+            this.blocks = blocks;
+            this.container = context.container;
+            this.context = context;
+            for (let block in this.blocks) this.append(this.blocks[block].container);
+        }
+        private append(container: TContainer) {
+            this.container.append(container);
+        }
+        runHooks(hooks: Array<() => void> = []) {
+            this.context.hook && hooks.push(this.context.hook.bind(this.context));
+            this.forEach(child => child.children && child.children.runHooks(hooks));
+            this.context.isRoot && hooks.forEach(hook => setTimeout(hook, 0));
+        }
+        get = <K extends keyof T ,M extends K>(key: M) => this.blocks[key];
+        forEach<K extends keyof T, M extends K>(callback: (arg: T[M], key: string) => void) {
+            Object.keys(this.blocks).forEach(key => callback(this.blocks[key as M], key));
+        }
+    }
 }
 
-export abstract class Block <containerType extends container> {
-    readonly container: containerType;
-    protected renders: Function[] = [];
-    mounted?(): void;
-    constructor (container: containerType | string) {
+export interface IBlock {
+    readonly container: TContainer;
+    readonly isRoot?: boolean;
+    readonly classes?: Streams.Classes;
+    readonly attributes?: Streams.Attributes;
+    readonly children?: Streams.Children;
+    hook?(): void;
+}
+
+export abstract class Block <T extends TContainer> implements IBlock {
+    readonly container: T;
+    hook?(): void;
+    readonly isRoot?: boolean;
+    constructor (container: T|string) {
         typeof container == 'string'
-        ? this.container = document.createElement(container as string) as containerType
-        : this.container = container as containerType;
-    }
-    render() {
-        this.renders.forEach(render => render(this));
-        return {
-            container: this.container,
-            mounted: this.mounted ? this.mounted.bind(this) : new Function
-        }
-    }
-}
-
-export abstract class BlockWithComputingData<T extends container, K> extends Block<T> {
-    protected abstract computedFields(): K;
-    protected readonly constructor_data: Map<string,any> = new Map;
-    protected constructorData <type> (propertyName: string, propertyValue?: type): type {
-        propertyValue && this.constructor_data.set(propertyName, propertyValue)
-        return this.constructor_data.get(propertyName);
-    }
-    fixData(...fixers: Function[]) {
-        const computed = this.computedFields() as BaseInterfaces.Indexable<K>;
-        fixers.forEach(fixer => fixer(computed, this));
-        const _this = this as unknown as BaseInterfaces.Indexable<this>;
-        for (let field in computed) {
-            for (let thisField in _this) {
-                if (field == thisField) {
-                    _this[thisField] = computed[field];
-                    delete computed[field];
-                }
-            }
-        }
-        for (let field in computed) _this[field] = computed[field];
+        ? this.container = document.createElement(container as string) as T
+        : this.container = container as T;
     }
 }

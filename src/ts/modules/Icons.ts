@@ -1,4 +1,4 @@
-export interface interfaceIcons {
+export interface IIcons {
     back: string;
     forward: string;
     playAndPause: {
@@ -7,7 +7,7 @@ export interface interfaceIcons {
     }
 }
 
-const iconsPack: Map<string, interfaceIcons> = new Map (
+const iconsPack: Map<string, IIcons> = new Map (
     [
         [
             'orange', 
@@ -23,13 +23,13 @@ const iconsPack: Map<string, interfaceIcons> = new Map (
     ]
 )
 
-export class Icons implements interfaceIcons {
+export class Icons implements IIcons {
     [property:string]: string|object;
     back:string;
     forward:string;
     playAndPause: {play: string; pause: string};
     constructor(iconsThemeName: string) {
-        let thisIconTheme: interfaceIcons = iconsPack.get(iconsThemeName) as interfaceIcons;
+        let thisIconTheme: IIcons = iconsPack.get(iconsThemeName) as IIcons;
         this.back = thisIconTheme.back;
         this.forward = thisIconTheme.forward;
         this.playAndPause = thisIconTheme.playAndPause;
