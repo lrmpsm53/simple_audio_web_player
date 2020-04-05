@@ -1,5 +1,5 @@
 import './modules/styles';
-import {PlayerContainer, i_track} from './modules/PlayerContainer';
+import {PlayerContainer, ISong} from './modules/PlayerContainer';
 
 console.info (
     `
@@ -10,10 +10,7 @@ console.info (
     `
 );
 
-module.exports = (
-    containers: HTMLCollectionOf<HTMLElement>,
-    playlist: i_track[]
-    ) => 
-    Array.from(containers).map (
-        container => new PlayerContainer(container, 'orange', playlist).render()
-    );
+module.exports = function(containers: HTMLCollectionOf<HTMLElement>, playlist: ISong[]) {
+    const containersArr = Array.from(containers);
+    containersArr.map(container => new PlayerContainer(container, 'orange', playlist).children.runHooks());
+}

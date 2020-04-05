@@ -1,36 +1,32 @@
-import {BlockWithComputingData, Block, Addons, Handlers} from './abstract/Abstract';
+import {Streams, Block} from './abstract/Abstract';
+import type {PlayerContainer__AudioBlock as AudioBlock} from './PlayerContainer';
 
-export default class Time 
-extends BlockWithComputingData<HTMLElement, Addons.WithEvents> 
-implements Addons.WithClasses, Addons.WithEvents {
-    classes = ['sc---time'];
+abstract class TimeData extends Block<HTMLElement> {
     referenceType: string;
-    events = [];
-    AudioBlock: HTMLAudioElement;
-    renders = [Handlers.Classes.render, Handlers.Events.render]
-    constructor(referenceType: string, AudioBlock: HTMLAudioElement) {
+    protected AudioBlock: AudioBlock;
+    constructor(referenceType: string, AudioBlock: AudioBlock) {
         super('span');
         this.referenceType = referenceType;
         this.AudioBlock = AudioBlock;
-        this.constructorData('AudioBlock', AudioBlock);
-        this.fixData(Handlers.Events.fix);
-        this.updatetime();
     }
-    computedFields() {
-        return {
-            events: [{
-                name: 'timeupdate',
-                block: this.constructorData<HTMLAudioElement>('AudioBlock'),
-                callback: this.updatetime
-            }]
-        }
+}
+
+export default class Time extends TimeData {
+    classes = new Streams.Classes(this, 'sc---time');
+    events = new Streams.Events(this, {
+        name: 'timeupdate', block: this.AudioBlock.container, 
+        callback: this.updatetime
+    })
+    constructor(referenceType: string, AudioBlock: AudioBlock) {
+        super(referenceType, AudioBlock);
+        this.updatetime();
     }
     updatetime() {
         function create_time_string(seconds: number): string {
             let minutes = Math.floor(seconds/60);
             let only_seconds: number|string = Math.floor(seconds - minutes*60);
             if(only_seconds < 10) only_seconds = '0' + only_seconds.toString();
-            return minutes + ':' + only_seconds;
+            return `${minutes}:${only_seconds}`;
         }
         const duration = this.AudioBlock.duration ? this.AudioBlock.duration : 0;
         const currrentTime = this.AudioBlock.currentTime;

@@ -1,176 +1,131 @@
-import {Button, ButtonComputed} from './abstract/Button';
+import Button from './abstract/Button';
 import Bar from './abstract/Bar';
-import {Block, Addons, Handlers, BlockWithComputingData} from './abstract/Abstract';
-import {interfaceIcons} from './Icons';
-import type {PlayerContainer} from './PlayerContainer';
+import {Block, Streams, IBlock} from './abstract/Abstract';
+import type {IIcons} from './Icons';
+import type {PlayerContainer, PlayerContainer__AudioBlock as AudioBlock} from './PlayerContainer';
 
-class Controls__VolumeBar extends Bar<Addons.WithClasses> {
-    constructor(AudioBlock: Block<HTMLAudioElement>) {
-        super(AudioBlock.container);
-        this.fixData(Handlers.Classes.fix);
-    }
-    computedFields() {
-        return Object.assign(
-            super.computedFields(),
-            {
-                classes: ['sc---controls__volume-bar']
-            }
-        )
+class Controls__VolumeBar extends Bar implements IBlock {
+    AudioBlock: AudioBlock;
+    classes = new Streams.Classes(this, 'sc---controls__volume-bar');
+    constructor(AudioBlock: AudioBlock) {
+        super();
+        this.AudioBlock = AudioBlock;
     }
     protected getNewMousemovePosition (event: MouseEvent) {
-        const context = super.getNewMousemovePosition (event);
-        if (context) {
-            const {value: value, this: _this} = context;
-            _this.AudioBlock.volume = value;
-        }
+        const newVolume = super.getNewMousemovePosition(event);
+        if (newVolume) this.AudioBlock.volume = newVolume;
     }
-    mounted () {
-        super.calculateValue(0.5);
+    hook() {
+        this.changeValues(0.5);
         this.AudioBlock.volume = 0.5;
     }
 }
 
-class Controls__PausePlay extends Button {
+abstract class PausePlayData extends Button {
     isPlay = false;
-    AudioBlock: Block<HTMLAudioElement>;
-    renders = [Handlers.Attributes.render, Handlers.Classes.render, Handlers.Events.render];
-    constructor(icons: {pause: string; play: string}, AudioBlock: Block<HTMLAudioElement>) {
+    AudioBlock: AudioBlock;
+    constructor(icons: {pause: string; play: string}, AudioBlock: AudioBlock) {
         super(icons);
         this.AudioBlock = AudioBlock;
-        this.fixData(Handlers.Classes.fix);
-        super.changeIcon ('play');
     }
-    computedFields(): ButtonComputed & Addons.WithEvents & Addons.WithClasses {
-        const _super = super.computedFields();
-        return Object.assign(
-            _super, 
-            {
-                events: [
-                    {
-                        name: 'click',
-                        block: this.container,
-                        callback: this.changeIcon
-                    },
-                    {
-                        name: 'ended',
-                        block: this.AudioBlock.container,
-                        callback: this.changeIconWhenEndedTrack
-                    }
-                ],
-                classes: ['sc---controls-pause-play']
-            }
-        )
+}
+
+class Controls__PausePlay extends PausePlayData implements IBlock {
+    events = new Streams.Events(this,
+        {
+            name: 'click',
+            block: this.container,
+            callback: this.changeIcon
+        },
+        {
+            name: 'ended',
+            block: this.AudioBlock.container,
+            callback: this.changeIconWhenEndedTrack
+        }
+    );
+    classes = new Streams.Classes(this, 'sc---controls-pause-play');
+    constructor(icons: {pause: string; play: string}, AudioBlock: AudioBlock) {
+        super(icons, AudioBlock);
+        super.changeIcon('play');
     }
     private changeIconWhenEndedTrack() {
         super.changeIcon('play');
         this.isPlay = false;
     }
-    public changeIcon () {
+    changeIcon () {
         if (this.isPlay) {
             super.changeIcon('play');
-            this.AudioBlock.container.pause();
+            this.AudioBlock.pause();
             this.isPlay = false;
         }
         else {
             super.changeIcon('pause');
-            this.AudioBlock.container.play();
+            this.AudioBlock.play();
             this.isPlay = true;
         }
     }
 }
 
-class Controls__SwichTrack extends Button implements Addons.WithEvents {
+class Controls__SwichTrack extends Button implements IBlock {
     k: 1|-1;
     root: PlayerContainer;
     parent: Controls;
-    events = [{
-            name: 'click',
-            block: this.container,
-            callback: this.swichTrack
-    }]
-    renders = [Handlers.Attributes.render, Handlers.Classes.render, Handlers.Events.render];
+    events = new Streams.Events(this, {
+        name: 'click',
+        block: this.container,
+        callback: this.swichTrack
+    });
     constructor(icon: string, k: 1|-1, alt: string, root: PlayerContainer, parent: Controls) {
         super(icon, alt);
         this.root = root;
         this.k = k;
         this.parent = parent;
-        this.fixData(Handlers.Attributes.fix);
     }
     swichTrack() {
         this.root.swichTrack(this.k);
-        const PausePlay = ((this.parent.children as i_ControlsChildren).Controls__PausePlay as Controls__PausePlay)
+        const PausePlay = this.parent.children.get('Controls__PausePlay');
         PausePlay.isPlay = !PausePlay.isPlay;
         PausePlay.changeIcon.call(PausePlay);   
     }
 }
 
-class Controls__Border extends Block<HTMLImageElement> {
-    attributes = [{
+class Controls__Border extends Block<HTMLImageElement> implements IBlock {
+    attributes = new Streams.Attributes(this, {
         name: 'src',
         value: require('../../../icons/border.svg')
-    }]
-    classes = ['sc---controls__border'];
-    renders = [Handlers.Classes.render, Handlers.Attributes.render];
+    });
+    classes = new Streams.Classes(this, 'sc---controls__border');
     constructor() {
         super('img');
     }
 }
 
-interface i_ControlsChildren {
-    Controls__Border1: Controls__Border;
-    Controls__Back: Controls__SwichTrack;
-    Controls__Border2: Controls__Border;
-    Controls__PausePlay: Controls__PausePlay;
-    Controls__Border3: Controls__Border;
-    Controls__Forward: Controls__SwichTrack;
-    Controls__Border4: Controls__Border;
-    Controls__VolumeBar: Controls__VolumeBar;
-    Controls__Border5: Controls__Border;
+abstract class ControlsData extends Block<HTMLElement> {
+    icons: IIcons;
+    root: PlayerContainer;
+    AudioBlock: AudioBlock;
+    constructor(icons: IIcons, root: PlayerContainer, AudioBlock: AudioBlock) {
+        super('div');
+        this.icons = icons;
+        this.root = root;
+        this.AudioBlock = AudioBlock;
+    }
 }
 
-export class Controls 
-    extends BlockWithComputingData<HTMLElement, Addons.WithChildren<i_ControlsChildren>> 
-    implements Addons.WithChildren, Addons.WithClasses {
-    children = {};
-    classes = ['sc---controls', 'sc---row', 'sc---row_middle-children'];
-    renders = [Handlers.Classes.render, Handlers.Children.render];
-    constructor(icons: interfaceIcons, AudioBlock: Block<HTMLAudioElement>, root: PlayerContainer) {
-        super('div');
-        this.constructorData <interfaceIcons> ('iconsTheme', icons);
-        this.constructorData <Block<HTMLAudioElement>> ('AudioBlock', AudioBlock);
-        this.constructorData <PlayerContainer> ('root', root);
-        this.fixData(Handlers.Children.fix);
-    }
-    computedFields() {
-        return {
-            children: {
-                Controls__Border1: new Controls__Border,
-                Controls__Back: new Controls__SwichTrack (
-                    this.constructorData <interfaceIcons> ('iconsTheme').back,
-                    -1,
-                    'button back',
-                    this.constructorData <PlayerContainer> ('root'),
-                    this
-                ),
-                Controls__Border2: new Controls__Border,
-                Controls__PausePlay: new Controls__PausePlay (
-                    this.constructorData <interfaceIcons> ('iconsTheme').playAndPause,
-                    this.constructorData <Block<HTMLAudioElement>> ('AudioBlock')
-                ),
-                Controls__Border3: new Controls__Border,
-                Controls__Forward: new Controls__SwichTrack (
-                    this.constructorData <interfaceIcons> ('iconsTheme').forward,
-                    1,
-                    'button forward',
-                    this.constructorData <PlayerContainer> ('root'),
-                    this
-                ),
-                Controls__Border4: new Controls__Border,
-                Controls__VolumeBar: new Controls__VolumeBar (
-                    this.constructorData <Block<HTMLAudioElement>> ('AudioBlock')
-                ),
-                Controls__Border5: new Controls__Border
-            }
-        }
+export default class Controls extends ControlsData implements IBlock {
+    children = new Streams.Children(this, {
+        Controls__Border1: new Controls__Border,
+        Controls__Back: new Controls__SwichTrack(this.icons.back, -1, 'button back', this.root, this),
+        Controls__Border2: new Controls__Border,
+        Controls__PausePlay: new Controls__PausePlay(this.icons.playAndPause, this.AudioBlock),
+        Controls__Border3: new Controls__Border,
+        Controls__Forward: new Controls__SwichTrack(this.icons.forward, 1, 'button forward', this.root, this),
+        Controls__Border4: new Controls__Border,
+        Controls__VolumeBar: new Controls__VolumeBar(this.AudioBlock),
+        Controls__Border5: new Controls__Border
+    });
+    classes = new Streams.Classes(this, 'sc---controls', 'sc---row', 'sc---row_middle-children');
+    constructor(icons: IIcons, AudioBlock: AudioBlock, root: PlayerContainer) {
+        super(icons, root, AudioBlock);
     }
 }

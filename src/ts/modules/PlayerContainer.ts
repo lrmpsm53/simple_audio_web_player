@@ -1,114 +1,112 @@
-import {Icons, interfaceIcons} from './Icons';
-import {BlockWithComputingData, Block, Addons, Handlers, Streams} from './abstract/Abstract';
-import {Controls} from './Controls';
-import {TrackName} from './TrackName';
+import { Icons, IIcons } from './Icons';
+import { Block, Streams } from './abstract/Abstract';
+import Controls from './Controls';
+import TrackName from './TrackName';
 import Time from './Time';
 import Bar from './abstract/Bar';
 
-class PlayerContainer__ProgressBar extends Bar<Addons.WithClasses & Addons.WithEvents> {
-    constructor(AudioBlock: HTMLAudioElement) {
-        super(AudioBlock);
-        this.constructorData <HTMLAudioElement> ('AudioBlock', AudioBlock);
-        this.fixData(Handlers.Classes.fix, Handlers.Events.fix);
-    }
-    computedFields() {
-        return Object.assign(
-            super.computedFields(),
-            {
-                classes: ['sc---progress-bar'],
-                events: [{
-                    name: 'timeupdate',
-                    block: this.constructorData <HTMLElement> ('AudioBlock'),
-                    callback: this.updateProgress
-                }]
-            }
-        )
+class PlayerContainer__ProgressBar extends Bar {
+    AudioBlock: PlayerContainer__AudioBlock;
+    classes = new Streams.Classes(this, 'sc---progress-bar');
+    constructor(AudioBlock: PlayerContainer__AudioBlock) {
+        super();
+        this.AudioBlock = AudioBlock;
+        this.events = new Streams.Events(this, {
+            name: 'timeupdate',
+            block: this.AudioBlock.container,
+            callback: this.updateProgress
+        })
     }
     getNewMousemovePosition(event: MouseEvent) {
-        const context = super.getNewMousemovePosition(event);
-        if (context) {
-            const {value: value, this: _this} = context;
-            const duration = _this.AudioBlock.duration;
-            _this.AudioBlock.currentTime = value * duration;
-        }
+        const newTime = super.getNewMousemovePosition(event);
+        if (newTime) this.AudioBlock.currentTime = newTime * this.AudioBlock.duration;
     }
     updateProgress() {
         const duration = this.AudioBlock.duration;
         const currentTime = this.AudioBlock.currentTime;
-        this.calculateValue(currentTime / duration);
+        this.changeValues(currentTime / duration);
     }
 }
 
-export interface i_track {
+export interface ISong {
     name: string;
     source: string;
 }
 
-class PlayerContainer__AudioBlock extends Block <HTMLAudioElement> implements Addons.WithAttributes {
-    renders = [Handlers.Attributes.render];
-    constructor () {
-        super ('audio');
+export class PlayerContainer__AudioBlock extends Block<HTMLAudioElement> {
+    constructor() {
+        super('audio');
     }
-    attributes = [
-        {name: 'preload', value: 'auto'},
-        {name: 'type', value: 'audio/mp3'}
-    ];
-    updateSource (source: string) {
+    attributes = new Streams.Attributes(this,
+        { name: 'preload', value: 'auto' },
+        { name: 'type', value: 'audio/mp3' }
+    )
+    set src(source: string) {
         this.container.src = source;
     }
+    get src() {
+        return this.container.src;
+    }
+    get duration() {
+        return this.container.duration;
+    }
+    get currentTime() {
+        return this.container.currentTime;
+    }
+    set currentTime(value: number) {
+        this.container.currentTime = value;
+    }
+    set volume(value: number) {
+        this.container.volume = value;
+    }
+    get volume() {
+        return this.container.volume;
+    }
+    pause = () => this.container.pause();
+    play = () => this.container.play();
 }
 
-interface PlayerChildren {
-    TrackName: TrackName;
-    PLayer__AudioBlock: PlayerContainer__AudioBlock;
-    Controls: Controls;
-    Player__TimeCurrent: Time;
-    Player__ProgressBar: PlayerContainer__ProgressBar;
-    Player__TimeLeft: Time;
-}
-
-type PlayerComputed = Addons.WithChildren<PlayerChildren>
-
-export class PlayerContainer 
-    extends BlockWithComputingData <HTMLElement, PlayerComputed> 
-    implements Addons.WithClasses 
-{
-    private trackNumer: number = 0;
-    private playlist: i_track[] = [];
-    classes = new Streams.Classes(
-        ['sc---row', 'sc---row_middle-children', 'sc---player'], 
-        this.container
-    );
-    private currentSizesSum = 0;
-    private sizes = [375, 600, 800, 1024, 1280, 1440, 1680, 1920];
-    children = {};
-    events = [{
-        name: 'resize',
-        block: window,
-        callback: this.updateSize
-    }]
-    renders = [Handlers.Children.render, Handlers.Classes.render, Handlers.Events.render];
-    constructor(root: HTMLElement, iconsThemeName: string, tracks: i_track[]) {
+abstract class PlayerContainerData extends Block<HTMLElement> {
+    isRoot = true;
+    protected icons: IIcons;
+    protected playlist: ISong[];
+    protected songNumer: number = 0;
+    protected AudioBlock = new PlayerContainer__AudioBlock;
+    protected currentSizesSum = 0;
+    protected sizes = [375, 600, 800, 1024, 1280, 1440, 1680, 1920];
+    constructor(root: HTMLElement, iconsTheme: string, playlist: ISong[]) {
         super(root);
-        this.constructorData <interfaceIcons> ('icons', new Icons(iconsThemeName));
-        this.constructorData <i_track[]>('tracks', tracks);
-        this.fixData(Handlers.Children.fix);
+        this.icons = new Icons(iconsTheme);
+        this.playlist = playlist;
+    }
+}
+
+export class PlayerContainer extends PlayerContainerData {
+    children = new Streams.Children(this, {
+        TrackName: new TrackName,
+        PLayer__AudioBlock: this.AudioBlock,
+        Controls: new Controls(this.icons, this.AudioBlock, this),
+        Player__TimeCurrent: new Time('current', this.AudioBlock),
+        Player__ProgressBar: new PlayerContainer__ProgressBar(this.AudioBlock),
+        Player__TimeLeft: new Time('left', this.AudioBlock),
+    });
+    events = new Streams.Events(this, { name: 'resize', block: window, callback: this.updateSize });
+    classes = new Streams.Classes(this, 'sc---row', 'sc---row_middle-children', 'sc---player');
+    constructor(root: HTMLElement, iconsTheme: string, playlist: ISong[]) {
+        super(root, iconsTheme, playlist);
         this.updateSize();
         this.swichTrack(0);
     }
-    computedFields() {
-        const cache = new PlayerContainer__AudioBlock;
-        return {
-            playlist: this.constructorData <i_track[]> ('tracks'),
-            children: {
-                TrackName: new TrackName,
-                PLayer__AudioBlock: cache,
-                Controls: new Controls (this.constructorData('icons') , cache, this),
-                Player__TimeCurrent: new Time ('current', cache.container),
-                Player__ProgressBar: new PlayerContainer__ProgressBar (cache.container),
-                Player__TimeLeft: new Time ('left', cache.container),
-            }
+    swichTrack(trackNumerKey: number) {
+        this.songNumer = this.songNumer + trackNumerKey;
+        switch (this.songNumer) {
+            case -1: this.songNumer = this.playlist.length - 1
+                break;
+            case this.playlist.length: this.songNumer = 0;
         }
+        const root = this.children;
+        root.get('TrackName').updateName(this.playlist[this.songNumer].name);
+        root.get('PLayer__AudioBlock').src = this.playlist[this.songNumer].source;
     }
     updateSize() {
         if (this.currentSizesSum != 0) {
@@ -121,24 +119,13 @@ export class PlayerContainer
                 return total;
             } else return total;
         }, new Array);
-        if(result.length == 0) {
+        if (result.length == 0) {
             this.currentSizesSum = 1;
-            this.classes.push(`_${this.sizes[this.sizes.length-1]}px`);
+            this.classes.push(`_${this.sizes[this.sizes.length - 1]}px`);
         }
         else {
             this.currentSizesSum = result.length;
             result.forEach(elem => this.classes.push(`_${elem}px`));
         }
-    }
-    swichTrack(trackNumerKey: number) {
-        this.trackNumer = this.trackNumer + trackNumerKey;
-        switch(this.trackNumer) {
-            case -1: this.trackNumer = this.playlist.length - 1
-            break;
-            case this.playlist.length: this.trackNumer = 0;
-        }
-        const root = (this.children as PlayerChildren);
-        root.TrackName.updateName(this.playlist[this.trackNumer].name);
-        root.PLayer__AudioBlock.updateSource(this.playlist[this.trackNumer].source);
     }
 }
