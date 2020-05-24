@@ -9,5 +9,6 @@ export abstract class Main<T extends TView> extends StateEnviron {
     }
     mountTree(mountPoint: TContainer) {
         mountPoint.append(this.View.DOMElement.container);
+        this.View.ViewTree?.runMountedHooks();
     }
 }

@@ -14,6 +14,7 @@ abstract class AbstractView<T extends TC> extends StateEnviron {
     protected createDOMElement(container: string) {
         return new DOMElement<T>(container);
     }
+    mounted?(): void;
     modify(callback: (_this: this) => void) {
         callback(this);
         return this;
@@ -35,7 +36,7 @@ class SimpleView<T extends TC> extends AbstractView<T> {
 export abstract class View<T extends TC> extends AbstractView<T> {
     ViewTree?: ViewTree;
     events?: ViewEvents<this>;
-    createViewTree(input: IViewTreeNode[]) {
+    createViewTree(input: TViewTreeNode[]) {
         return new ViewTree({
             name: 'Root',
             element: this,
@@ -90,23 +91,40 @@ export class ViewEvents<T extends TView> extends StreamForArrays<TEvent> {
     }
 }
 
-interface IViewTreeNode extends ITreeNode<AbstractView<TC>> {
-    slot?: AbstractView<TC>;
-}
+type TViewTreeNode = ITreeNode<AbstractView<TC>>;
 
 export class ViewTree extends Tree<AbstractView<TC>> {
-    buildTree(node: IViewTreeNode) {
-        if (!!node.children) {
-            node.children.forEach(child => {
-                if (node.children && node.element.slot)
-                node.element.slot.DOMElement.append(this.buildTree(child))
-                else
-                node.element.DOMElement.append(this.buildTree(child));
-            });
+    hooks: Function[] = []
+    buildTree(node: TViewTreeNode) {
+        const handler = (node: TViewTreeNode) => {
+            this.appendChild(node);
+            this.hookMounted(node);
         }
-        return node.element.DOMElement.container;
+        this.treeTrevesal(handler, node);
     }
-    constructor(tree: IViewTreeNode) {
+    appendChild(node: TViewTreeNode) {
+        function nodeContainer(node: TViewTreeNode) {
+            if (!!node.element.slot)
+            return node.element.slot.DOMElement.container
+            else return node.element.DOMElement.container;
+        }
+        const container = nodeContainer(node);
+        if (!!node.children) {
+            node.children.forEach(
+                child => container.append(nodeContainer(child))
+            );
+        }
+    }
+    hookMounted(node: TViewTreeNode) {
+        const element = node.element;
+        if (element.mounted) {
+            this.hooks.push(element.mounted.bind(element));
+        }
+    }
+    runMountedHooks() {
+        this.hooks.forEach(hook => setTimeout(() => hook()));
+    }
+    constructor(tree: TViewTreeNode) {
         super(tree);
         this.buildTree(tree);
     }

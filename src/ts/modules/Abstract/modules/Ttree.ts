@@ -12,16 +12,20 @@ export abstract class Tree<T> {
     readonly root: T;
     protected tree: ITreeNode<T>;
     protected treeMap: ITreeMap<T>;
-    createMap(node:ITreeNode<T>, buffer: ITreeMap<T> = {}) {
-		if (!!node.name) {
-			buffer[node.name] = node.element;
+    createMap(node:ITreeNode<T>) {
+		const buffer: ITreeMap<T> = {};
+		function handler(node: ITreeNode<T>) {
+			if (!!node.name) buffer[node.name] = node.element;
 		}
-		if (!!node.children) {
-			node.children.forEach(
-				child => this.createMap(child, buffer)
-			);
-		}
+		this.treeTrevesal(handler, node);
 		return buffer;
+	}
+	treeTrevesal(handler: (node: ITreeNode<T>,) => void, tree: ITreeNode<T>) {
+		const callback = (node: ITreeNode<T>) => {
+			handler(node);
+			node.children?.forEach(child => callback(child));
+		}
+		callback(tree);
 	}
 	get<K extends keyof ITreeMap<T>, M extends K>(key: M) {
         return this.treeMap[key];
