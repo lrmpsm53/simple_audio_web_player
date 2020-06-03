@@ -6,7 +6,8 @@ module.exports = {
     resolve: {
         extensions: [".ts", ".tsx", ".js"]
     },
-    entry: './index.ts',
+    devtool: 'source-map',
+    entry: './src/ts/index.ts',
     output: {
         library: 'Player',
         filename: './player.js',
