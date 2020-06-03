@@ -1,4 +1,4 @@
-abstract class Stream<T extends object> {
+abstract class Store<T extends object> {
     protected abstract fields: T;
     forEach<K extends keyof T, M extends K>(callback: (arg: T[M], key: M) => void) {
         const cleanFields = { ...this.fields };
@@ -18,7 +18,7 @@ abstract class Stream<T extends object> {
     abstract pop(): void;
 }
 
-export class StreamForArrays<T> extends Stream<Array<T>> {
+export class StoreForArrays<T> extends Store<Array<T>> {
     fields: T[];
     constructor(...fields: T[]) {
         super();
@@ -32,7 +32,7 @@ export class StreamForArrays<T> extends Stream<Array<T>> {
     }
 }
 
-export class StreamForObjects<T extends object = object> extends Stream<T> {
+export class StoreForObjects<T extends object = object> extends Store<T> {
     fields: T;
     constructor(fields?: T) {
         super();

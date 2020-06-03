@@ -1,4 +1,4 @@
-import { StreamForArrays } from './Stream';
+import { StoreForArrays } from './Store';
 
 export type TContainer = HTMLElement | HTMLAudioElement | HTMLImageElement;
 
@@ -7,11 +7,12 @@ type TAttribute = {
     readonly value: string;
 }
 
+type TDOMElement = DOMElement<TContainer>;
 
 export class DOMElement<T extends TContainer> {
     readonly container: T;
-    classes: ClassesDOMStream<T>;
-    attributes: AttributesDOMStream<T>;
+    readonly classes: ClassesDOMStream<T>;
+    readonly attributes: AttributesDOMStream<T>;
     append(container: TContainer) {
         this.container.append(container);
     }
@@ -21,15 +22,14 @@ export class DOMElement<T extends TContainer> {
         this.attributes = new AttributesDOMStream(this);
     }
 }
-type TDOMElement = DOMElement<TContainer>;
 
-abstract class DOMStream<T> extends StreamForArrays<T> {
+abstract class DOMStream<T> extends StoreForArrays<T> {
     abstract append(...args: any[]): void;
-    abstract DOMElement: TDOMElement;
+    abstract readonly DOMElement: TDOMElement;
 }
 
 export class ClassesDOMStream<T extends TContainer> extends DOMStream<string> {
-    DOMElement: DOMElement<T>;
+    readonly DOMElement: DOMElement<T>;
     private classList: DOMTokenList;
     constructor(DOMElment: DOMElement<T>) {
         super();
