@@ -1,5 +1,5 @@
-import './modules/styles';
-import {PlayerContainer, ISong} from './modules/PlayerContainer';
+import './modules/styles/styles.ts';
+import { Player, ISong } from './modules/logic/Player';
 
 console.info (
     `
@@ -10,7 +10,13 @@ console.info (
     `
 );
 
-module.exports = function(containers: HTMLCollectionOf<HTMLElement>, playlist: ISong[]) {
+function PlayerInit(containers: HTMLCollectionOf<Element>, playlist: ISong[]) {
     const containersArr = Array.from(containers);
-    containersArr.map(container => new PlayerContainer(container, 'orange', playlist).children.runHooks());
+    containersArr.map(container => {
+        const player = new Player;
+        player.mountTree(container as HTMLElement);
+        player.addSongs(...playlist);
+    })
 }
+
+module.exports = PlayerInit;

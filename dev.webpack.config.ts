@@ -1,9 +1,10 @@
-const path = require('path');
+import * as path from 'path';
+import * as webpack from 'webpack';
+import HTMLWebpackPlugin from 'html-webpack-plugin';
 
-module.exports = {
+const config: webpack.Configuration = {
     mode: 'development',
-    context: path.resolve(__dirname, './src'),
-    entry: './index.js',
+    entry: './test.ts',
     output: {
         filename: './player.js',
         path: path.resolve(__dirname, './lib')
@@ -16,11 +17,15 @@ module.exports = {
         watchContentBase: true,
         watchOptions: {
             poll: true
-        }
+        },
+        port: 80
     },
     resolve: {
         extensions: [".ts", ".tsx", ".js"]
       },
+      plugins: [
+        new HTMLWebpackPlugin({ title: 'Test' })
+    ],
     module: {
         rules: [
             {
@@ -31,7 +36,7 @@ module.exports = {
                 ]
             },
             {
-                test: /\.(scss|css)$/,
+                test: /\.(sass|css)$/,
                 use: [
                     'to-string-loader',
                     'css-loader',
@@ -48,27 +53,9 @@ module.exports = {
                 options: {
                     limit: false,
                 }
-            },
-            {
-                test: /\.html$/,
-                use: [
-                    {
-                        loader: 'file-loader',
-                        options: {
-                            name: './index.html',
-                            esModule: true
-                        }
-                    },
-                    'extract-loader',
-                    {
-                        loader: 'html-loader',
-                        options: {
-                            minimize: true,
-                            interpolate: true
-                        }
-                    }
-                ]
             }
         ]
     }
 }
+
+export default config;

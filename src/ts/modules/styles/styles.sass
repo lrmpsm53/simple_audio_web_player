@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css?family=Comfortaa&display=swap&subset=cyrillic');
+
+@keyframes move
+    from
+        margin-left: 100%
+    to
+        margin-left: -200%
+
+.sc---row
+    display: flex
+    justify-content: space-between
+.sc---row_middle-children
+    align-items: center
+
+
+.sc---player 
+    *
+        margin: 0
+        padding: 0
+    user-select: none
+    font-family: Comfortaa, sans-serif
+    background: linear-gradient(to bottom, #f4f4f4, #ececec, #f4f4f4)
+
+
+.sc---track-name
+    overflow: hidden
+    align-self: center
+
+.sc---track-name__name
+    white-space: nowrap
+    cursor: pointer
+    animation: move 10s linear
+    animation-iteration-count: infinite
+    &:hover
+        animation-play-state: paused
+
+
+.sc---controls__volume-bar
+    width: 30%
+    margin: 2% 0 2% 0
+
+.sc---border
+    width: 2px
+    height: 100%
+
+
+.sc---button
+    cursor: pointer
+    transition: transform 0.1s ease-in
+    &:active
+        transform: scale(120%)
+
+
+.sc---bar
+    position: relative
+    cursor: pointer
+    background-color: #ffbb5591
+
+.sc---bar__roller
+    background-color: #ffa319
+    width: 16px
+    height: 16px
+    position: absolute
+    border-radius: 100%
+    top: calc(50% - 10px)
+    left: calc(0% - 10px)
+    z-index: 1
+    border: 2px solid white
+    transition: transform 0.1s ease-in
+    &:active
+        transform: scale(110%)
+
+.sc---bar__state
+    position: absolute
+    border-radius: 8px
+    top: 0
+    left: 0
+    background-color: #ffa319
+    height: 100%
+    width: 0
+    transition: width 0.5s ease-in-out
+
+
+.sc---progress-bar
+    width: 50%
+
+
+.sc---time
+    width: 7%;
+    text-align: center
+    user-select: none
+
+
+._1920px
+    font-size: 14px
+    padding: 5px 1% 5px 1%
+    height: 40px
+    .sc---track-name
+        width: 15%
+    .sc---controls
+        width: 18%
+    .sc---button
+        width: 40px
+    .sc---bar
+        height: 8px
+        border-radius: 8px
+
+._1680px
+    height: 35px
+    .sc---button
+        width: 35px
+
+._1440px
+    .sc---controls
+        width: 24%
+
+._1280px
+    .sc---bar__roller
+        width: 14px
+        height: 14px
+        top: calc(50% - 9px)
+        left: calc(0% - 9px)
+    .sc---bar
+        height: 6px
+        border-radius: 6px
+    .sc---bar__state {border-radius: 6px}
+
+._1024px
+    height: 30px
+    font-size: 12px
+    .sc---button
+        width: 30px
+    .sc---progress-bar
+        width: 40%
+    .sc---track-name
+        width: 20%
+    .sc---controls
+        width: 30%
+
+._800px
+    .sc---bar__roller
+        width: 12px
+        height: 12px
+        top: calc(50% - 8px)
+        left: calc(0% - 8px)
+
+._600px
+    flex-wrap: wrap
+    align-items: center
+    justify-content: space-around
+    height: 70px
+    .sc---controls
+        width: 53%
+        height: 40%
+    .sc---progress-bar
+        width: 70%
+    .sc---track-name
+        width: 45%
+
+._375px
+    .sc---button
+        width: 25px

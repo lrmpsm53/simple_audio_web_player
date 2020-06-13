@@ -1,13 +1,14 @@
-const path = require('path');
+import * as path from 'path';
+import * as webpack from 'webpack';
 
-module.exports = {
+const config: webpack.Configuration = {
     mode: 'production',
     target: 'web',
     resolve: {
         extensions: [".ts", ".tsx", ".js"]
     },
-    context: path.resolve(__dirname, './src'),
-    entry: './ts/index.ts',
+    devtool: 'source-map',
+    entry: './src/ts/index.ts',
     output: {
         library: 'Player',
         filename: './player.js',
@@ -18,14 +19,14 @@ module.exports = {
             test: /\.tsx?$/, loader: "ts-loader"
         },
         {
-            test: /\.(scss|css)$/,
+            test: /\.(sass|css)$/,
             use: [
                 'to-string-loader',
                 'css-loader',
                 {
                     loader: 'postcss-loader',
                     options: {
-                        plugins: (loader) => [
+                        plugins: (loader: any) => [
                         require('postcss-import')({ root: loader.resourcePath }),
                         require('postcss-preset-env'),
                         require('cssnano'),
@@ -43,26 +44,8 @@ module.exports = {
             test: /\.(png|jpe?g|gif|svg|ttf|otf)$/i,
             loader: 'base64-inline-loader',
             options: {limit: false}
-        },
-        {
-            test: /\.html$/,
-            use: [
-                {
-                    loader: 'file-loader',
-                    options: {
-                        name: './index.html',
-                        esModule: true
-                    }
-                },
-                'extract-loader',
-                {
-                    loader: 'html-loader',
-                    options: {
-                        minimize: true,
-                        interpolate: true
-                    }
-                }
-            ]
-        },
+        }
     ]}
 }
+
+export default config;
