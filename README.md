@@ -2,7 +2,7 @@
 
 Simple player for your site
 
-[Look](look.png)
+![Look](look.png)
 
 ## Version
 **0.6.0** . Recommended for reference only. Stay tuned
