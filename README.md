@@ -2,7 +2,7 @@
 
 Simple player for your site
 
-[Look](https://github.com/DmitriyOrlov53/simple_audio_web_player/raw/master/image.png)
+[Look](https://github.com/DmitriyOrlov53/simple_audio_web_player/blob/master/look.png)
 
 ## Version
 **0.6.0** . Recommended for reference only. Stay tuned
