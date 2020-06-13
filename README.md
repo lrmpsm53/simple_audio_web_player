@@ -1,9 +1,11 @@
 # Simple Audio Web  Player
 
 Simple player for your site
-## Version
-**0.4.0** . Recommended for reference only. Stay tuned
 
+[Look](https://github.com/{DmitriyOrlov53}/{simple_audio_web_player}/raw/{master}/image.png)
+
+## Version
+**0.6.0** . Recommended for reference only. Stay tuned
 
 ## Getting Started
 ### Installing
@@ -47,7 +49,7 @@ The wrapper function takes two arguments: a collection of elements that will bec
 #### NodeJS
 
 ```js
-const {Player} = require('simple-audio-web-player');
+const Player = require('simple-audio-web-player');
 
 const playlist = [
     {
@@ -67,7 +69,7 @@ Player (
 ```
 
 ## Decription
-This small script (25.6 kb) will generate an audio player on your web page. The package includes icons and css. 
+This script (40.8 kb) will generate an audio player on your web page. The package includes icons and css.
 
 **Internet explorer 11 is unsupported**
 
