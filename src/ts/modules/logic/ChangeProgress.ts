@@ -4,33 +4,28 @@ import type { Time } from '../views/Time';
 import type { Bar } from '../views/Bar';
 
 export class ChangeProgress extends Logic<Player> {
-    TimeCurrent = this.Main.View.ViewTree.get('TimeCurrent') as Time;
-    TimeLeft = this.Main.View.ViewTree.get('TimeLeft') as Time;
-    ProgressBar = this.Main.View.ViewTree.get('ProgressBar') as Bar;
-    states = this.setStates({
-        currentAudio: this.createState(0)
-            .addCallbacks(() => {
+    readonly TimeCurrent = this.Main.View.getChild('TimeCurrent') as Time;
+    readonly TimeLeft = this.Main.View.getChild('TimeLeft') as Time;
+    readonly ProgressBar = this.Main.View.getChild('ProgressBar') as Bar;
+    readonly states = this.setStates({
+        currentAudio: {
+            value: 0,
+            callbacks: [() => {
                 const current = this.Main.Audio.currentTime();
                 const duration = this.Main.Audio.duration();
                 this.updateTime(current, duration);
-            })
-            .setBind(this.Main.Audio.states.get('currentTime'))
-            .setReverseBind(this.ProgressBar.states.get('currentValue'))
-    });
-    recipient = this.setRecipient({
-        timeupdate: this.updateAll
-    })
-    .addSender(this.Main.Audio.sender)
-    .addSender(this.Main.Switchtrack.sender)
-    transformCurrent(current: number) {
-        const Audio = this.Main.Audio;
-        const duration = Audio.duration() ? Audio.duration() : 0;
-        if (current > 1) current /= duration;
-        return {
-            current: current,
-            duration: duration
+            }],
+            binds: [ this.Main.Audio.states.get('currentTime') ],
+            reverseBinds: [ this.ProgressBar.states.get('currentValue') ]
         }
-    }
+    });
+    readonly recipient = this.setRecipient(
+        { timeupdate: this.updateAll },
+        [
+            this.Main.Audio.sender,
+            this.Main.Switchtrack.sender
+        ]
+    );
     getValues() {
         const current = this.Main.Audio.currentTime();
         let duration = this.Main.Audio.duration();
@@ -51,7 +46,7 @@ export class ChangeProgress extends Logic<Player> {
     updateTime(current: number, duration: number) {
         if(typeof current == 'number' && typeof duration == 'number') {
             const updateValue = (Time:Time) => {
-                const field = Time.DOMElement.container;
+                const field = Time.container;
                 switch(Time.referenceType) {
                     case 'left':
                     field.textContent = Time.createTimeString(duration - current)

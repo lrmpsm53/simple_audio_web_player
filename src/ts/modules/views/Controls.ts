@@ -4,10 +4,11 @@ import { Border } from './Border';
 import { Bar } from './Bar';
 
 export class SwitchBack extends Button {
-    sender = this.setSender();
+    readonly name = 'SwitchBack';
+    readonly sender = this.setSender();
     events = this.bindEvents({
         name: 'click',
-        block: this.DOMElement.container,
+        block: this.container,
         callback: () => this.sender.sendMessage('back')
     });
     constructor() {
@@ -15,7 +16,7 @@ export class SwitchBack extends Button {
         this.states.get('iconsSet').value([
             require('../../../icons/back.svg')
         ]);
-        this.DOMElement.attributes.push({
+        this.element.attributes.push({
             name: 'alt',
             value: 'button forward'
         });
@@ -23,10 +24,11 @@ export class SwitchBack extends Button {
 }
 
 export class SwitchForward extends Button {
-    sender = this.setSender();
-    events = this.bindEvents({
+    readonly name = 'SwitchForward';
+    readonly sender = this.setSender();
+    readonly events = this.bindEvents({
         name: 'click',
-        block: this.DOMElement.container,
+        block: this.container,
         callback: () => this.sender.sendMessage('forward')
     });
     constructor() {
@@ -34,7 +36,7 @@ export class SwitchForward extends Button {
         this.states.get('iconsSet').value([
             require('../../../icons/forward.svg')
         ]);
-        this.DOMElement.attributes.push({
+        this.element.attributes.push({
             name: 'alt',
             value: 'button forward'
         });
@@ -42,23 +44,24 @@ export class SwitchForward extends Button {
 }
 
 export class PlayPause extends Button {
-    events = this.bindEvents({
+    readonly name = 'PlayPause';
+    readonly events = this.bindEvents({
         name: 'click',
-        block: this.DOMElement.container,
+        block: this.container,
         callback: this.switchCurrentIcon
     });
-    switchCurrentIcon() {
+    protected switchCurrentIcon() {
         this.sender.sendMessage('toggle');
         super.switchCurrentIcon();
     }
-    sender = this.setSender();
+    readonly sender = this.setSender();
     constructor() {
         super();
         this.states.get('iconsSet').value([
             require('../../../icons/play.svg'),
             require('../../../icons/pause.svg')
         ]);
-        this.DOMElement.attributes.push({
+        this.element.attributes.push({
             name: 'alt',
             value: 'button play/pause'
         });
@@ -66,10 +69,11 @@ export class PlayPause extends Button {
 }
 
 export class VolumeBar extends Bar {
-    sender = this.setSender();
+    readonly name = 'VolumeBar';
+    readonly sender = this.setSender();
     constructor() {
         super();
-        const element = this.DOMElement;
+        const element = this.element;
         element.classes.push('sc---controls__volume-bar');
     }
     mounted() {
@@ -78,43 +82,24 @@ export class VolumeBar extends Bar {
 }
 
 export class Controls extends View<HTMLElement> {
-    DOMElement = this.createDOMElement('div')
-        .classes.append(
+    readonly name = 'Controls';
+    readonly element = this.createDOMElement({
+        tag: 'div',
+        classes: [
             'sc---controls',
             'sc---row',
             'sc---row_middle-children'
-        );
-    ViewTree = this.createViewTree([
-        {
-            element: new Border
-        },
-        {
-            name: 'SwitchBack',
-            element: new SwitchBack
-        },
-        {
-            element: new Border
-        },
-        {
-            name: 'PlayPause',
-            element: new PlayPause
-        },
-        {
-            element: new Border
-        },
-        {
-            name: 'SwitchForward',
-            element: new SwitchForward
-        },
-        {
-            element: new Border
-        },
-        {
-            name: 'VolumeBar',
-            element: new VolumeBar
-        },
-        {
-            element: new Border
-        }
-    ]);
+        ]
+    });
+    readonly children = [
+        new Border,
+        new SwitchBack,
+        new Border,
+        new PlayPause,
+        new Border,
+        new SwitchForward,
+        new Border,
+        new VolumeBar,
+        new Border
+    ];
 }

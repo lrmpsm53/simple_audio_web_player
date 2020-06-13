@@ -1,8 +1,8 @@
 import { Component } from "./Component";
 import type { Main } from './Main';
-import type { TView } from './View';
+import type { TRootView } from './View';
 
-export class Logic<T extends Main<TView>> extends Component {
+export class Logic<T extends Main<TRootView>> extends Component {
     Main: T;
     constructor(Main: T) {
         super();

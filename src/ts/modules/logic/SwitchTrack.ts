@@ -4,28 +4,34 @@ import type { TrackName } from '../views/TrackName';
 import type { SwitchBack, SwitchForward } from '../views/Controls';
 
 export class SwitchTrack extends Logic<Player> {
-    Songs = this.Main.states.get('Songs');
-    TrackName = this.Main.View.ViewTree.get('TrackName') as TrackName;
-    SwitchBack = this.Main.Controls.ViewTree.get('SwitchBack') as SwitchBack;
-    SwitchForward = this.Main.Controls.ViewTree.get('SwitchForward') as SwitchForward;
-    states = this.setStates({
-        currentSong: this.createState(0)
-            .addCallbacks(this.updateViews)
+    readonly Songs = this.Main.states.get('Songs');
+    readonly TrackName = this.Main.View.getChild('TrackName') as TrackName;
+    readonly SwitchBack = this.Main.View.getChild('SwitchBack') as SwitchBack;
+    readonly SwitchForward = this.Main.View.getChild('SwitchForward') as SwitchForward;
+    readonly states = this.setStates({
+        currentSong: {
+            value: 0,
+            callbacks: [ this.updateViews ]
+        }
     });
-    recipient = this.setRecipient({
-        back: () => this.switchTrack(-1),
-        forward: () => this.switchTrack(1),
-        ended: () => {
-            this.switchTrack(1);
-            this.Main.Audio.states.get('isPlay').value(true);
+    readonly recipient = this.setRecipient(
+        {
+            back: () => this.switchTrack(-1),
+            forward: () => this.switchTrack(1),
+            ended: () => {
+                this.switchTrack(1);
+                this.Main.Audio.states.get('isPlay').value(true);
+            },
+            addSongs: () => this.updateViews(0)
         },
-        addSongs: () => this.updateViews(0)
-    })
-    .addSender(this.SwitchBack.sender)
-    .addSender(this.SwitchForward.sender)
-    .addSender(this.Main.Audio.sender)
-    .addSender(this.Main.sender)
-    sender = this.setSender();
+        [
+            this.SwitchBack.sender,
+            this.SwitchForward.sender,
+            this.Main.Audio.sender,
+            this.Main.sender
+        ]
+    );
+    readonly sender = this.setSender();
     updateViews(index: number) {
         const track = this.Songs.value()[index];
         this.TrackName.states.get('Name').value(track.name);

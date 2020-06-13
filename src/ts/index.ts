@@ -19,4 +19,4 @@ function PlayerInit(containers: HTMLCollectionOf<Element>, playlist: ISong[]) {
     })
 }
 
-export default PlayerInit
+module.exports = PlayerInit;

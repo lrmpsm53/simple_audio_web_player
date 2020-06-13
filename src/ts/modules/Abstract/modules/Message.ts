@@ -19,9 +19,10 @@ export type TRecipient = Recipient<handlers>;
 export class Recipient<T extends handlers> {
     handlers: StoreForObjects<T>;
     context: object;
-    constructor(context: object, handlers: T) {
+    constructor(context: object, handlers: T, senders?: Sender[]) {
         this.context = context;
         this.handlers =  new StoreForObjects(handlers);
+        senders && senders.forEach(sender => this.addSender(sender));
     }
     getMessage<K extends keyof T, M extends K>(message: M|string) {
         const handler = this.handlers.get(message);

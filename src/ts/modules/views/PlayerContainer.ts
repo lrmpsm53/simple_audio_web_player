@@ -1,56 +1,49 @@
-import { View } from '../Abstract/Abstract';
+import { RootView } from '../Abstract/Abstract';
 import { Audio } from './Audio';
 import { TrackName } from './TrackName';
 import { Controls } from './Controls';
 import { Time } from './Time';
 import { Bar } from './Bar';
 
-export class PlayerContainer extends View<HTMLElement> {
+export class ProgressBar extends Bar {
+    readonly name = 'ProgressBar';
+    constructor() {
+        super();
+        const element = this.element;
+        element.classes.push('sc---progress-bar');
+    }
+}
+
+export class PlayerContainer extends RootView<HTMLElement> {
     protected sizes = [375, 600, 800, 1024, 1280, 1440, 1680, 1920];
     protected currentSizesSum = 0;
-    DOMElement = this.createDOMElement('div')
-    .classes.append(
-        'sc---row',
-        'sc---row_middle-children', 
-        'sc---player'
-    );
-    ViewTree = this.createViewTree([
-        {
-            name: 'Audio',
-            element: new Audio
-        },
-        {
-            name: 'TrackName',
-            element: new TrackName
-        },
-        {
-            name: 'Controls',
-            element: new Controls
-        },
-        {
-            name: 'TimeCurrent',
-            element: new Time('current')
-        },
-        {
-            name: 'ProgressBar',
-            element: new Bar()
-                .modify(_this => {
-                    const element = _this.DOMElement;
-                    element.classes.push('sc---progress-bar')
-                })
-        },
-        {
-            name: 'TimeLeft',
-            element: new Time('left')
-        },
-    ]);
-    events = this.bindEvents({
+    readonly element = this.createDOMElement({
+        tag: 'div',
+        classes: [
+            'sc---row',
+            'sc---row_middle-children',
+            'sc---player'
+        ]
+    });
+    readonly children = [
+        new Audio,
+        new TrackName,
+        new Controls,
+        new Time('current'),
+        new ProgressBar,
+        new Time('left'),
+    ];
+    readonly events = this.bindEvents({
             name: 'resize',
             block: window, callback: 
             this.updateSize 
     });
-    updateSize() {
-        const root = this.DOMElement;
+    constructor() {
+        super();
+        this.container.style.visibility = 'hidden';
+    }
+    private updateSize() {
+        const root = this.element;
         if (this.currentSizesSum != 0) {
             for (let i = 1; i <= this.currentSizesSum; i++) {
                 root.classes.pop();
@@ -74,5 +67,6 @@ export class PlayerContainer extends View<HTMLElement> {
     }
     mounted() {
         this.updateSize();
+        this.container.style.visibility = 'visible';
     }
 }

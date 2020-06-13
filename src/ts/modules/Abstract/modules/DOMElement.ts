@@ -1,5 +1,11 @@
 import { StoreForArrays } from './Store';
 
+export interface ITemplate {
+    readonly tag: string;
+    readonly classes?: string[];
+    readonly attributes?: TAttribute[];
+}
+
 export type TContainer = HTMLElement | HTMLAudioElement | HTMLImageElement;
 
 type TAttribute = {
@@ -11,79 +17,63 @@ type TDOMElement = DOMElement<TContainer>;
 
 export class DOMElement<T extends TContainer> {
     readonly container: T;
-    readonly classes: ClassesDOMStream<T>;
-    readonly attributes: AttributesDOMStream<T>;
+    readonly classes: ClassesDOMStream;
+    readonly attributes: AttributesDOMStream;
     append(container: TContainer) {
         this.container.append(container);
     }
-    constructor(container: string) {
-        this.container = document.createElement(container) as T;
+    private parseTemplate(classes?: string[], attrs?: TAttribute[]) {
+        classes && classes.forEach(_class => this.classes.push(_class));
+        attrs && attrs.forEach(attr => this.attributes.push(attr));
+    }
+    constructor(template: ITemplate) {
+        const { tag, classes, attributes } = template;
+        this.container = document.createElement(tag) as T;
         this.classes = new ClassesDOMStream(this);
         this.attributes = new AttributesDOMStream(this);
+        this.parseTemplate(classes, attributes);
     }
 }
 
 abstract class DOMStream<T> extends StoreForArrays<T> {
-    abstract append(...args: any[]): void;
     abstract readonly DOMElement: TDOMElement;
 }
 
-export class ClassesDOMStream<T extends TContainer> extends DOMStream<string> {
-    readonly DOMElement: DOMElement<T>;
+export class ClassesDOMStream extends DOMStream<string> {
+    readonly DOMElement: DOMElement<TContainer>;
     private classList: DOMTokenList;
-    constructor(DOMElment: DOMElement<T>) {
+    constructor(DOMElment: DOMElement<TContainer>) {
         super();
         this.DOMElement = DOMElment;
         this.classList = this.DOMElement.container.classList;
     }
-    private addClass(_class: string) {
-        this.classList.add(_class);
-    }
-    private removeClass(_class: string) {
-        this.classList.remove(_class);
-    }
     push(_class: string) {
-        this.addClass(_class);
+        this.classList.add(_class);
         super.push(_class);
-        return this.DOMElement;
-    }
-    append(...classes: string[]) {
-        classes.forEach(_class => this.push(_class));
-        return this.DOMElement;
     }
     pop() {
-        this.removeClass(this.classList[this.classList.length - 1]);
+        const _class = this.fields.slice(-1)[0];
+        this.classList.remove(_class);
         super.pop();
-        return this.DOMElement;
     }
 }
 
-export class AttributesDOMStream<T extends TContainer> extends DOMStream<TAttribute> {
-    DOMElement: DOMElement<T>;
-    container: T;
-    constructor(DOMElement: DOMElement<T>) {
+export class AttributesDOMStream extends DOMStream<TAttribute> {
+    readonly DOMElement: DOMElement<TContainer>;
+    readonly container: TContainer;
+    constructor(DOMElement: DOMElement<TContainer>) {
         super();
         this.DOMElement = DOMElement;
         this.container = this.DOMElement.container;
     }
-    private addAttribute(attribute: TAttribute) {
-        this.container.setAttribute(attribute.name, attribute.value);
-    }
-    private removeAttribute(attribute: TAttribute) {
-        this.container.removeAttribute(attribute.value);
-    }
     push(attribute: TAttribute) {
-        this.addAttribute(attribute);
+        const { name, value } = attribute;
+        this.container.setAttribute(name, value);
         super.push(attribute);
-        return this.DOMElement;
     }
     pop() {
-        this.removeAttribute(this.fields.slice(-1)[0]);
+        const { value } = this.fields.slice(-1)[0];
+        this.container.removeAttribute(value);
         super.pop();
-        return this.DOMElement;
-    }
-    append(...attrs: TAttribute[]) {
-        attrs.forEach(attr => this.push(attr));
-        return this.DOMElement;
     }
 }

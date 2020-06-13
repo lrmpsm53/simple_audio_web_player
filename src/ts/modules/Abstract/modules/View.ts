@@ -1,54 +1,67 @@
-import { DOMElement, TContainer as TC, ClassesDOMStream, AttributesDOMStream } from './DOMElement';
+import { DOMElement, TContainer as TC, ClassesDOMStream, AttributesDOMStream, ITemplate } from './DOMElement';
 import { Component } from './Component';
 import { StoreForArrays } from './Store';
-import { ITreeNode, Tree } from './Ttree';
+
+type TViewNode = AbstractView<TC>;
+
+interface ISimpleViewTemplate extends ITemplate {
+    readonly name?: string;
+};
 
 abstract class AbstractView<T extends TC> extends Component {
-    abstract DOMElement: DOMElement<T>;
-    slot?: AbstractView<TC>;
-    ViewTree?: ViewTree;
-    protected createDOMElement(container: string) {
-        return new DOMElement<T>(container);
+    name?: string;
+    readonly abstract element: DOMElement<T>;
+    children?: TViewNode[];
+    protected createDOMElement(template: ITemplate) {
+        return new DOMElement<T>(template);
+    }
+    containerProp<K extends keyof T>(prop: K, value?: T[K]) {
+        if (value) this.element.container[prop] = value;
+        return this.element.container[prop];
+    }
+    get container() {
+        return this.element.container;
     }
     mounted?(): void;
-    modify(callback: (_this: this) => void) {
-        callback(this);
-        return this;
-    }
 }
 
 class SimpleView<T extends TC> extends AbstractView<T> {
-    DOMElement: DOMElement<T>;
-    classes: ClassesDOMStream<T>;
-    attributes: AttributesDOMStream<T>;
-    constructor(container: string) {
+    readonly element: DOMElement<T>;
+    readonly classes: ClassesDOMStream;
+    readonly attributes: AttributesDOMStream;
+    constructor(template: ISimpleViewTemplate) {
         super();
-        this.DOMElement = this.createDOMElement(container);
-        this.classes = this.DOMElement.classes;
-        this.attributes = this.DOMElement.attributes;
+        this.name = template.name;
+        this.element = this.createDOMElement(template);
+        this.classes = this.element.classes;
+        this.attributes = this.element.attributes;
     }
 }
 
-export type TView = View<TC>;
-
 export abstract class View<T extends TC> extends AbstractView<T> {
-    ViewTree?: ViewTree;
-    events?: ViewEvents<this>;
-    createViewTree(input: TViewTreeNode[]) {
-        return new ViewTree({
-            name: 'Root',
-            element: this,
-            children: input
-        });
-    }
-    createSimpleView<T extends TC>(container: string) {
-        return new SimpleView<T>(container);
+    readonly events?: ViewEvents;
+    createSimpleView<T extends TC>(template: ISimpleViewTemplate) {
+        return new SimpleView<T>(template);
     }
     bindEvents(...events: TEvent[]) {
         return new ViewEvents(this, ...events);
     }
-    build() {
-        this.ViewTree?.buildTree();
+    getChild(name: string) {
+        let value: TViewNode|undefined;
+        const handler = (node: TViewNode) => {
+            if (node.name === name) value = node;
+        }
+        this.treeTrevesal(handler, this);
+        return value;
+    }
+    protected treeTrevesal(handler: (node: TViewNode) => void, tree: View<TC>) {
+		const callback = (node: TViewNode) => {
+			handler(node);
+			if (node.children) {
+				node.children.forEach(child => callback(child));
+			}
+		}
+		callback(tree);
     }
 }
 
@@ -59,9 +72,9 @@ export type TEvent = {
     readonly capture?: boolean;
 }
 
-export class ViewEvents<T extends object> extends StoreForArrays<TEvent> {
-    Context: T;
-    constructor(Context: T, ...events: TEvent[]) {
+export class ViewEvents extends StoreForArrays<TEvent> {
+    readonly Context: object;
+    constructor(Context: object, ...events: TEvent[]) {
         super(...events);
         this.Context = Context;
         this.fields.forEach(event => this.addEvent(event));
@@ -90,56 +103,30 @@ export class ViewEvents<T extends object> extends StoreForArrays<TEvent> {
     }
 }
 
-type TViewTreeNode = ITreeNode<AbstractView<TC>>;
+export type TRootView = RootView<TC>;
 
-interface  IHook {
-    context: object;
-    hook: () => void;
-}
-
-export class ViewTree extends Tree<AbstractView<TC>> {
-    hooks: IHook[] = [];
-    buildTree(node = this.tree) {
-        const handler = (node: TViewTreeNode) => {
+export abstract class RootView<T extends TC> extends View<T> {
+    private hooks: Array<() => void> = [];
+    buildView() {
+        const handler = (node: TViewNode) => {
             this.appendChild(node);
-            this.hookMounted(node);
-        }
-        this.treeTrevesal(handler, node);
-    }
-    appendChild(node: TViewTreeNode) {
-        function nodeContainer(node: TViewTreeNode) {
-            if (!!node.element.slot)
-            return node.element.slot.DOMElement.container
-            else return node.element.DOMElement.container;
-        }
-        const container = nodeContainer(node);
-        if (!!node.children) {
-            node.children.forEach(
-                child => container.append(nodeContainer(child))
-            );
-        }
-        else if (!!node.element.ViewTree) {
-            this.buildTree(node.element.ViewTree.tree);
-        }
-    }
-    hookMounted(node: TViewTreeNode) {
-        const element = node.element;
-        if (!!element.mounted) {
-            const hook = {
-                hook: element.mounted,
-                context: element
+            if (node.mounted) {
+                this.hooks.push(node.mounted.bind(node));
             }
-            this.hooks.push(hook);
+        }
+        this.treeTrevesal(handler, this);
+    }
+    private appendChild(node: TViewNode) {
+        const container = node.container;
+        if (!!node.children) {
+            node.children.forEach(child => {
+                container.append(child.container);
+            });
         }
     }
     runMountedHooks() {
         setTimeout(() => {
-            this.hooks.forEach(hook => {
-                hook.hook.call(hook.context);
-            });
-        }, 0);
-    }
-    constructor(tree: TViewTreeNode) {
-        super(tree);
+            this.hooks.forEach(hook => hook());
+        }, 500);
     }
 }

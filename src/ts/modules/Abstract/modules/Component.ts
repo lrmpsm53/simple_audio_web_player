@@ -1,23 +1,28 @@
 import { StoreForObjects } from './Store';
-import { State, TState } from './State';
+import { State, IStateParams, Property } from './State';
 import { Sender, Recipient, TRecipient, handlers } from './Message';
 
-type StateUnits = {[index: string]: TState<any>};
+type TStateUnits = { [index: string]: IStateParams<any> }
+
+type TStateStore<T extends TStateUnits> = {
+    [K in keyof T]: State<Property<T[K], 'value'>, T[K]>
+}
 
 export abstract class Component {
-    states?: StoreForObjects;
-    sender?: Sender;
-    recipient?: TRecipient;
-    setStates<T extends StateUnits>(states: T) {
-        return new StoreForObjects(states);
+    readonly states?: StoreForObjects;
+    readonly sender?: Sender;
+    readonly recipient?: TRecipient;
+    setStates<T extends TStateUnits>(states: T) {
+        const storeStates = new StoreForObjects<TStateStore<T>>();
+        for (let key in states) {
+            storeStates.push({[key]: new State(this, states[key])});
+        }
+        return storeStates;
     }
     setSender() {
         return new Sender;
     }
-    setRecipient(handlers: handlers) {
-        return new Recipient(this, handlers);
-    }
-    createState<T>(input: T) {
-        return new State(this, input);
+    setRecipient(handlers: handlers, senders?: Sender[]) {
+        return new Recipient(this, handlers, senders);
     }
 }

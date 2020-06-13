@@ -1,33 +1,32 @@
 import { View } from '../Abstract/Abstract';
 
 export class Bar extends View<HTMLElement> {
-    DOMElement = this.createDOMElement('div')
-        .classes.push('sc---bar');
-    ViewTree = this.createViewTree([
-        {
-            name: 'Roller',
-            element: 
-                this.createSimpleView<HTMLElement>('div')
-                .modify(
-                    _this =>_this.classes.push('sc---bar__roller')
-                )
-        },
-        {
-            name: 'Bar__State',
-            element: 
-                this.createSimpleView<HTMLElement>('div')
-                .modify(
-                    _this => _this.classes.push('sc---bar__state')
-                )
-        }
-    ]);
-    states = this.setStates({
-        currentValue: this.createState(0)
-            .addCallbacks(this.changeValues)
+    readonly element = this.createDOMElement({
+        tag: 'div',
+        classes: [ 'sc---bar' ]
     });
-    events = this.bindEvents(
+    readonly children = [
+        this.createSimpleView<HTMLElement>({
+            name: 'Roller',
+            tag: 'div',
+            classes: [ 'sc---bar__roller' ]
+        }),
+        this.createSimpleView<HTMLElement>({
+            name: 'Bar__State',
+            tag: 'div',
+            classes: [ 'sc---bar__state' ]
+        })
+    ];
+    readonly states = this.setStates({
+        currentValue: {
+            value: 0,
+            callbacks: [ this.changeValues ]
+        }
+    });
+    readonly events = this.bindEvents(
         {
-            name: 'resize', block: window,
+            name: 'resize',
+            block: window,
             callback: () => this.updatePositionRoller()
         },
         {
@@ -38,7 +37,7 @@ export class Bar extends View<HTMLElement> {
         }, 
         {
             name: 'mousedown', 
-            block: this.DOMElement.container,
+            block: this.container,
             callback: () => this.swichMoving(true), capture: true
         }, 
         {
@@ -54,36 +53,37 @@ export class Bar extends View<HTMLElement> {
             capture: true
         }
     );
-    beforePositionRelative = 0;
+    private beforePositionRelative = 0;
     private isMoving = false;
-    private RollerRadius() {
-        const Roller = this.ViewTree.get('Roller');
-        return Roller.DOMElement.container.offsetWidth / 2;
+    private get RollerRadius() {
+        const Roller = this.getChild('Roller');
+        return Roller ? Roller.containerProp('offsetWidth') / 2 : 0;
     }
-    private BarWidth() {
-        return this.DOMElement.container.clientWidth;
+    private get BarWidth() {
+        return this.containerProp('clientWidth');
     }
-    private BarPosition() {
-        return Math.floor(this.DOMElement.container.getBoundingClientRect().left);
+    private get BarPosition() {
+        return Math.floor(this.container.getBoundingClientRect().left);
     }
     protected updatePositionRoller(relative?: number) {
-        if (relative) this.beforePositionRelative = relative / this.BarWidth();
+        if (relative) this.beforePositionRelative = relative / this.BarWidth;
         if (this.beforePositionRelative) {
-            const absolutePosition = this.BarWidth() * this.beforePositionRelative;
-            const absolutePositionWithoutRollerRadius = absolutePosition - this.RollerRadius();
-            const relativePositionWithoutRollerradius = absolutePositionWithoutRollerRadius / this.BarWidth() * 100;
-            this.ViewTree.get('Roller').DOMElement.container.style.left = `${relativePositionWithoutRollerradius}%`;
+            const absolutePosition = this.BarWidth * this.beforePositionRelative;
+            const absolutePositionWithoutRollerRadius = absolutePosition - this.RollerRadius;
+            const relativePositionWithoutRollerradius = absolutePositionWithoutRollerRadius / this.BarWidth * 100;
+            const Roller = this.getChild('Roller');
+            if(Roller) Roller.container.style.left = `${relativePositionWithoutRollerradius}%`;
         }
     }
     protected updateState(value: number) {
-        const State = this.ViewTree.get('Bar__State');
-        State.DOMElement.container.style.width = `${value*100}%`;
+        const State = this.getChild('Bar__State');
+        if(State) State.container.style.width = `${value*100}%`;
     }
     protected swichMoving(is: boolean) {
         this.isMoving = is;
     }
     protected getNewMousemovePosition(event: MouseEvent) {
-        const newPosition = event.clientX - this.BarPosition();
+        const newPosition = event.clientX - this.BarPosition;
         if (this.isMoving && newPosition) {
             this.changeValues(newPosition);
         }
@@ -92,8 +92,8 @@ export class Bar extends View<HTMLElement> {
         let newValueState: number;
         if (relative < 1) {
             newValueState = relative;
-            relative = relative * this.BarWidth();
-        } else newValueState = relative / this.BarWidth();
+            relative = relative * this.BarWidth;
+        } else newValueState = relative / this.BarWidth;
         if (0 < newValueState && newValueState < 1) {
             this.states.get('currentValue').value(newValueState);
             this.updateState(newValueState);

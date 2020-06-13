@@ -2,10 +2,9 @@ import { View } from '../Abstract/Abstract';
 const borderImg = require('../../../icons/border.svg');
 
 export class Border extends View<HTMLImageElement> {
-    DOMElement = this.createDOMElement('img')
-        .classes.push('sc---border')
-        .attributes.push({
-            name: 'src',
-            value: borderImg
-        });
+    readonly element = this.createDOMElement({
+        tag: 'img',
+        classes: [ 'sc---border' ],
+        attributes: [ { name: 'src', value: borderImg } ]
+    });
 }

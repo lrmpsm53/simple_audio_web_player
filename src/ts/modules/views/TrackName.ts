@@ -1,31 +1,30 @@
 import { View } from '../Abstract/Abstract';
 
 export class TrackName extends View<HTMLElement> {
-    DOMElement = this.createDOMElement('div')
-        .classes.append(
+    readonly name = 'TrackName';
+    readonly element = this.createDOMElement({
+        tag: 'div',
+        classes: [
             'sc---row',
             'sc---row_middle-children',
             'sc---track-name'
-        )
-    ViewTree = this.createViewTree([
-        {
-            name: 'TrackName__Name',
-            element: 
-                this.createSimpleView<HTMLElement>('span')
-                    .modify(_this =>
-                        _this.classes.push('sc---track-name__name')
-                    )
-        }
-    ]);
-    states = this.setStates({
-        'Name': this.createState('')
-            .addCallbacks(this.updateName)
+        ]
     });
-    updateName(trackName: string) {
-        const textField = this.ViewTree.get('TrackName__Name').DOMElement.container;
-        textField.textContent = trackName;
-        textField.classList.remove('sc---track-name__name_animated');
-        textField.classList.add('sc---track-name__name_animated');
-
+    readonly children = [
+        this.createSimpleView({
+                name: 'TrackName__Name',
+                tag: 'span',
+                classes: [ 'sc---track-name__name' ]
+        })
+    ];
+    readonly states = this.setStates({
+        Name: {
+            value: '',
+            callbacks: [ this.updateName ]
+        }
+    });
+    private updateName(trackName: string) {
+        const textField = this.getChild('TrackName__Name');
+        if (textField) textField.container.textContent = trackName;
     }
 }

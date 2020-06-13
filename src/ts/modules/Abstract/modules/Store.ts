@@ -41,6 +41,8 @@ export class StoreForObjects<T extends object = object> extends Store<T> {
     push(value: object) {
         const keys = Object.keys(value);
         if (keys.length > 1) throw new Error;
+        const fields = this.fields;
+        this.fields = {...fields, ...value};
     }
     pop() {
         const keys = Object.keys(this.fields);
