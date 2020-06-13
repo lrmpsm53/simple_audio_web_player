@@ -1,7 +1,8 @@
-import path from 'path';
+import * as path from 'path';
+import * as webpack from 'webpack';
 import HTMLWebpackPlugin from 'html-webpack-plugin';
 
-module.exports = {
+const config: webpack.Configuration = {
     mode: 'development',
     entry: './test.ts',
     output: {
@@ -17,22 +18,13 @@ module.exports = {
         watchOptions: {
             poll: true
         },
-        port: '80'
+        port: 80
     },
     resolve: {
         extensions: [".ts", ".tsx", ".js"]
       },
       plugins: [
-        new HTMLWebpackPlugin({
-            title: 'Test',
-            inject: 'head',
-            scriptLoading: 'defer',
-            showErrors: true,
-            meta: {
-                charset: 'UTF-8',
-                viewport: 'width=device-width, initial-scale=1.0'
-            }
-          }),
+        new HTMLWebpackPlugin({ title: 'Test' })
     ],
     module: {
         rules: [
@@ -61,27 +53,9 @@ module.exports = {
                 options: {
                     limit: false,
                 }
-            },
-            {
-                test: /\.html$/,
-                use: [
-                    {
-                        loader: 'file-loader',
-                        options: {
-                            name: './index.html',
-                            esModule: true
-                        }
-                    },
-                    'extract-loader',
-                    {
-                        loader: 'html-loader',
-                        options: {
-                            minimize: true,
-                            interpolate: true
-                        }
-                    }
-                ]
             }
         ]
     }
 }
+
+export default config;

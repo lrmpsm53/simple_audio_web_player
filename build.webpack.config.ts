@@ -1,6 +1,7 @@
-import path from 'path';
+import * as path from 'path';
+import * as webpack from 'webpack';
 
-module.exports = {
+const config: webpack.Configuration = {
     mode: 'production',
     target: 'web',
     resolve: {
@@ -43,26 +44,8 @@ module.exports = {
             test: /\.(png|jpe?g|gif|svg|ttf|otf)$/i,
             loader: 'base64-inline-loader',
             options: {limit: false}
-        },
-        {
-            test: /\.html$/,
-            use: [
-                {
-                    loader: 'file-loader',
-                    options: {
-                        name: './index.html',
-                        esModule: true
-                    }
-                },
-                'extract-loader',
-                {
-                    loader: 'html-loader',
-                    options: {
-                        minimize: true,
-                        interpolate: true
-                    }
-                }
-            ]
-        },
+        }
     ]}
 }
+
+export default config;

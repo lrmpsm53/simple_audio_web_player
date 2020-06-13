@@ -1,4 +1,4 @@
-import Player from './src/ts/index';
+const Player = require('./src/ts/index');
 
 const playlist = [
     {
@@ -16,4 +16,4 @@ container.classList.add('container')
 document.body.append(container);
 
 const containers = document.getElementsByClassName('container');
-Player(containers, playlist)
+Player(containers, playlist);
