@@ -15,13 +15,6 @@ export class Time extends View<HTMLElement> {
     constructor(referenceType: 'current'|'left') {
         super();
         this.referenceType = referenceType;
-        switch(referenceType) {
-            case 'current': this.name = 'TimeCurrent'
-            break
-            case 'left': this.name = 'TimeLeft';
-        }
-    }
-    mounted() {
         this.container.textContent = this.createTimeString(0);
     }
 }

@@ -1,7 +1,6 @@
 import { View } from '../Abstract/Abstract';
 
 export class Audio extends View<HTMLAudioElement> {
-    readonly name = 'Audio';
     readonly element = this.createDOMElement({
         tag: 'audio',
         attributes: [
@@ -37,9 +36,13 @@ export class Audio extends View<HTMLAudioElement> {
             name: 'ended',
             block: this.container,
             callback: () => {
-                this.states.get('isPlay').value(false);
                 this.sender.sendMessage('ended');
             }
+        },
+        {
+            name: 'loadeddata',
+            block: this.container,
+            callback: () => this.sender.sendMessage('timeupdate')
         }
     );
     readonly sender = this.setSender();

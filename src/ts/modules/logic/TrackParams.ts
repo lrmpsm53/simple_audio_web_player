@@ -10,9 +10,15 @@ export class TrackParams extends Logic<Player> {
 class TogglePlaying extends Logic<Player> {
     readonly PlayPause = this.Main.View.getChild('PlayPause') as PlayPause;
     readonly isPlay = this.Main.Audio.states.get('isPlay');
-    recipient = this.setRecipient(
-        { toggle: this.togglePlaying },
-        [ this.PlayPause.sender ]
+    readonly recipient = this.setRecipient(
+        {
+            toggle: this.togglePlaying,
+            switchIcon: () => this.PlayPause.switchCurrentIcon()
+        },
+        [
+            this.PlayPause.sender,
+            this.Main.Switchtrack.sender
+        ]
     );
     togglePlaying() {
         this.isPlay.value(!this.isPlay.value());

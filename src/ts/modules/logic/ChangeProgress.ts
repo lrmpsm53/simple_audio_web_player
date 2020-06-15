@@ -31,7 +31,7 @@ export class ChangeProgress extends Logic<Player> {
         let duration = this.Main.Audio.duration();
         duration = duration ? duration : 0;
         let progress = current / duration;
-        progress = progress ? progress : 0.0001;
+        progress = progress ? progress : 0;
         return {
             current: current,
             duration: duration,
@@ -44,20 +44,18 @@ export class ChangeProgress extends Logic<Player> {
         this.updateTime(current, duration);
     }
     updateTime(current: number, duration: number) {
-        if(typeof current == 'number' && typeof duration == 'number') {
-            const updateValue = (Time:Time) => {
-                const field = Time.container;
-                switch(Time.referenceType) {
-                    case 'left':
-                    field.textContent = Time.createTimeString(duration - current)
-                    break
-                    case 'current': 
-                    field.textContent = Time.createTimeString(current)
-                    break
-                }
+        const updateValue = (Time:Time) => {
+            const field = Time.container;
+            switch(Time.referenceType) {
+                case 'left':
+                field.textContent = Time.createTimeString(duration - current)
+                break
+                case 'current': 
+                field.textContent = Time.createTimeString(current)
+                break
             }
-            updateValue(this.TimeLeft);
-            updateValue(this.TimeCurrent);
         }
+        updateValue(this.TimeLeft);
+        updateValue(this.TimeCurrent);
     }
 }
