@@ -36,8 +36,8 @@
 
 
 .sc---controls__volume-bar
-    width: 30%
-    margin: 2% 0 2% 0
+    width: 28%
+    margin: 0 3% 0 3%
 
 .sc---border
     width: 2px
@@ -82,11 +82,11 @@
 
 
 .sc---progress-bar
-    width: 50%
+    width: 51.5%
 
 
 .sc---time
-    width: 7%;
+    width: 3%;
     text-align: center
     user-select: none
 
@@ -98,7 +98,7 @@
     .sc---track-name
         width: 15%
     .sc---controls
-        width: 18%
+        width: 22%
     .sc---button
         width: 40px
     .sc---bar
@@ -112,9 +112,13 @@
 
 ._1440px
     .sc---controls
-        width: 24%
+        width: 20%
+    .sc---button
+        width: 30px
 
 ._1280px
+    font-size: 12px
+    height: 30px
     .sc---bar__roller
         width: 14px
         height: 14px
@@ -123,40 +127,64 @@
     .sc---bar
         height: 6px
         border-radius: 6px
-    .sc---bar__state {border-radius: 6px}
+    .sc---bar__state
+        border-radius: 6px
+    .sc---button
+        width: 25px
 
 ._1024px
     height: 30px
     font-size: 12px
-    .sc---button
-        width: 30px
     .sc---progress-bar
         width: 40%
     .sc---track-name
         width: 20%
     .sc---controls
-        width: 30%
+        width: 27%
 
 ._800px
+    height: 50px
+    flex-wrap: wrap
+    align-items: center
+    justify-content: space-around
+    .sc---controls
+        width: 45%
+        height: 40%
+    .sc---progress-bar
+        width: 80%
+    .sc---track-name
+        width: 51%
     .sc---bar__roller
         width: 12px
         height: 12px
         top: calc(50% - 8px)
         left: calc(0% - 8px)
+    .sc---time
+        width: 5%;
+        text-align: center
+        user-select: none
+    .sc---controls__volume-bar
+        margin: 0
 
 ._600px
-    flex-wrap: wrap
-    align-items: center
-    justify-content: space-around
-    height: 70px
     .sc---controls
-        width: 53%
-        height: 40%
+        width: 60%
+    .sc---track-name
+        width: 36%
+
+._500px
+    height: 100px
+    .sc---controls
+        width: 80%
+        padding: 0 10% 0 10%
     .sc---progress-bar
         width: 70%
     .sc---track-name
-        width: 45%
-
-._375px
-    .sc---button
-        width: 25px
+        width: 80%
+        margin: auto auto
+        height: 20%
+    .sc---track-name__name
+        white-space: normal
+        animation: none
+    .sc---time
+        width: 10%

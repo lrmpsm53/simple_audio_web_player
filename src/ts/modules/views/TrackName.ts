@@ -1,7 +1,6 @@
 import { View } from '../Abstract/Abstract';
 
 export class TrackName extends View<HTMLElement> {
-    readonly name = 'TrackName';
     readonly element = this.createDOMElement({
         tag: 'div',
         classes: [

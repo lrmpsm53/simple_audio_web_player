@@ -4,13 +4,19 @@ import { Border } from './Border';
 import { Bar } from './Bar';
 
 export class SwitchBack extends Button {
-    readonly name = 'SwitchBack';
     readonly sender = this.setSender();
-    events = this.bindEvents({
-        name: 'click',
-        block: this.container,
-        callback: () => this.sender.sendMessage('back')
-    });
+    events = this.bindEvents(
+        {
+            name: 'click',
+            block: this.container,
+            callback: this.back
+        },
+        {
+            name: 'keyup',
+            block: document,
+            callback: this.setShortcut('B', this.back)
+        }
+    );
     constructor() {
         super();
         this.states.get('iconsSet').value([
@@ -21,16 +27,25 @@ export class SwitchBack extends Button {
             value: 'button forward'
         });
     }
+    back() {
+        this.sender.sendMessage('back');
+    }
 }
 
 export class SwitchForward extends Button {
-    readonly name = 'SwitchForward';
     readonly sender = this.setSender();
-    readonly events = this.bindEvents({
-        name: 'click',
-        block: this.container,
-        callback: () => this.sender.sendMessage('forward')
-    });
+    readonly events = this.bindEvents(
+        {
+            name: 'click',
+            block: this.container,
+            callback: this.forward
+        },
+        {
+            name: 'keyup',
+            block: document,
+            callback: this.setShortcut('F', this.forward)
+        }
+    );
     constructor() {
         super();
         this.states.get('iconsSet').value([
@@ -41,19 +56,24 @@ export class SwitchForward extends Button {
             value: 'button forward'
         });
     }
+    forward() {
+        this.sender.sendMessage('forward');
+    }
 }
 
 export class PlayPause extends Button {
-    readonly name = 'PlayPause';
-    readonly events = this.bindEvents({
-        name: 'click',
-        block: this.container,
-        callback: this.switchCurrentIcon
-    });
-    protected switchCurrentIcon() {
-        this.sender.sendMessage('toggle');
-        super.switchCurrentIcon();
-    }
+    readonly events = this.bindEvents(
+        {
+            name: 'click',
+            block: this.container,
+            callback: this.toggle
+        },
+        {
+            name: 'keyup',
+            block: document,
+            callback: this.setShortcut('Space', this.toggle)
+        }
+    );
     readonly sender = this.setSender();
     constructor() {
         super();
@@ -66,10 +86,47 @@ export class PlayPause extends Button {
             value: 'button play/pause'
         });
     }
+    toggle() {
+        this.sender.sendMessage('toggle');
+    }
+}
+
+export class LoopToggle extends Button {
+    readonly events = this.bindEvents(
+        {
+            name: 'click',
+            block: this.container,
+            callback: this.switchCurrentIcon
+        },
+        {
+            name: 'keyup',
+            block: document,
+            callback: this.setShortcut('L', this.switchCurrentIcon)
+        }
+    );
+    private looped: boolean = true;
+    isLooped() {
+        return this.looped;
+    }
+    switchCurrentIcon() {
+        this.looped = !this.looped;
+        super.switchCurrentIcon();
+    }
+    readonly sender = this.setSender();
+    constructor() {
+        super();
+        this.states.get('iconsSet').value([
+            require('../../../icons/loop-on.svg'),
+            require('../../../icons/loop-off.svg')
+        ]);
+        this.element.attributes.push({
+            name: 'alt',
+            value: 'button loop'
+        });
+    }
 }
 
 export class VolumeBar extends Bar {
-    readonly name = 'VolumeBar';
     readonly sender = this.setSender();
     constructor() {
         super();
@@ -77,12 +134,11 @@ export class VolumeBar extends Bar {
         element.classes.push('sc---controls__volume-bar');
     }
     mounted() {
-        this.sender.sendMessage('mounted');
+        this.states.get('currentValue').value(0.5);
     }
 }
 
 export class Controls extends View<HTMLElement> {
-    readonly name = 'Controls';
     readonly element = this.createDOMElement({
         tag: 'div',
         classes: [
@@ -93,13 +149,15 @@ export class Controls extends View<HTMLElement> {
     });
     readonly children = [
         new Border,
-        new SwitchBack,
+        new SwitchBack().setName('SwitchBack'),
+        new Border(),
+        new PlayPause().setName('PlayPause'),
         new Border,
-        new PlayPause,
+        new SwitchForward().setName('SwitchForward'),
         new Border,
-        new SwitchForward,
+        new LoopToggle().setName('LoopToggle'),
         new Border,
-        new VolumeBar,
+        new VolumeBar().setName('VolumeBar'),
         new Border
     ];
 }

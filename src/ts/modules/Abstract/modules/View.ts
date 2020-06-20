@@ -40,6 +40,10 @@ class SimpleView<T extends TC> extends AbstractView<T> {
 
 export abstract class View<T extends TC> extends AbstractView<T> {
     readonly events?: ViewEvents;
+    setName(newName: string) {
+        this.name = newName;
+        return this;
+    }
     createSimpleView<T extends TC>(template: ISimpleViewTemplate) {
         return new SimpleView<T>(template);
     }

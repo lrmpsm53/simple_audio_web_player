@@ -6,7 +6,6 @@ import { Time } from './Time';
 import { Bar } from './Bar';
 
 export class ProgressBar extends Bar {
-    readonly name = 'ProgressBar';
     constructor() {
         super();
         const element = this.element;
@@ -15,7 +14,7 @@ export class ProgressBar extends Bar {
 }
 
 export class PlayerContainer extends RootView<HTMLElement> {
-    protected sizes = [375, 600, 800, 1024, 1280, 1440, 1680, 1920];
+    protected sizes = [500, 600, 800, 1024, 1280, 1440, 1680, 1920];
     protected currentSizesSum = 0;
     readonly element = this.createDOMElement({
         tag: 'div',
@@ -26,12 +25,12 @@ export class PlayerContainer extends RootView<HTMLElement> {
         ]
     });
     readonly children = [
-        new Audio,
-        new TrackName,
+        new Audio().setName('Audio'),
+        new TrackName().setName('TrackName'),
         new Controls,
-        new Time('current'),
-        new ProgressBar,
-        new Time('left'),
+        new Time('current').setName('TimeCurrent'),
+        new ProgressBar().setName('ProgressBar'),
+        new Time('left').setName('TimeLeft'),
     ];
     readonly events = this.bindEvents({
             name: 'resize',

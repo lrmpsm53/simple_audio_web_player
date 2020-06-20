@@ -13,7 +13,7 @@ export interface ISong {
 export class Player extends Main<PlayerContainer> {
     readonly View = this.insertView(new PlayerContainer);
     readonly Audio = this.View.getChild('Audio') as Audio;
-    readonly states = this.setStates({Songs: { value: [] as ISong[] } });
+    readonly states = this.setStates({ Songs: { value: [] as ISong[] } });
     readonly sender = this.setSender();
     readonly Switchtrack = new SwitchTrack(this);
     readonly TrackParams = new TrackParams(this);

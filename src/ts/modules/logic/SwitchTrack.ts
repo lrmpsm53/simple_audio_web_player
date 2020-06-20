@@ -1,13 +1,14 @@
 import { Logic } from '../Abstract/Abstract';
 import type { Player } from './Player';
 import type { TrackName } from '../views/TrackName';
-import type { SwitchBack, SwitchForward } from '../views/Controls';
+import type { SwitchBack, SwitchForward, LoopToggle } from '../views/Controls';
 
 export class SwitchTrack extends Logic<Player> {
     readonly Songs = this.Main.states.get('Songs');
     readonly TrackName = this.Main.View.getChild('TrackName') as TrackName;
     readonly SwitchBack = this.Main.View.getChild('SwitchBack') as SwitchBack;
     readonly SwitchForward = this.Main.View.getChild('SwitchForward') as SwitchForward;
+    readonly LoopToggle = this.Main.View.getChild('LoopToggle') as LoopToggle;
     readonly states = this.setStates({
         currentSong: {
             value: 0,
@@ -19,8 +20,10 @@ export class SwitchTrack extends Logic<Player> {
             back: () => this.switchTrack(-1),
             forward: () => this.switchTrack(1),
             ended: () => {
-                this.switchTrack(1);
-                this.Main.Audio.states.get('isPlay').value(true);
+                if(this.LoopToggle.isLooped()) {
+                    this.switchTrack(1);
+                    this.Main.Audio.states.get('isPlay').value(true);
+                }
             },
             addSongs: () => this.updateViews(0)
         },
@@ -48,9 +51,8 @@ export class SwitchTrack extends Logic<Player> {
     }
     switchTrack(k: 1|-1) {
         const index = this.states.get('currentSong');
-        let indexValue = index.value();
+        const indexValue = index.value() + k;
         const tracksSum = this.Songs.value().length - 1;
-        indexValue += k;
         if (0 <= indexValue && indexValue <= tracksSum) {
             index.value(indexValue, 'forcibly');
         }
