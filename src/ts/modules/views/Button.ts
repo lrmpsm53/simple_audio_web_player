@@ -30,4 +30,11 @@ export class Button extends View<HTMLImageElement> {
         const otherIcon = this.states.get('iconsSet').value()[index];
         this.containerProp('src', otherIcon);
     }
+    setShortcut(shortcut: string, callback: () => void) {
+        return (event: KeyboardEvent) => {
+            if(event.code.match(new RegExp(shortcut))) {
+                callback.call(this);
+            }
+        }
+    }
 }

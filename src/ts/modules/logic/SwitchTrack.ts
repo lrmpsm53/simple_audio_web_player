@@ -24,7 +24,6 @@ export class SwitchTrack extends Logic<Player> {
                     this.switchTrack(1);
                     this.Main.Audio.states.get('isPlay').value(true);
                 }
-                else this.sender.sendMessage('switchIcon');
             },
             addSongs: () => this.updateViews(0)
         },
@@ -52,9 +51,8 @@ export class SwitchTrack extends Logic<Player> {
     }
     switchTrack(k: 1|-1) {
         const index = this.states.get('currentSong');
-        let indexValue = index.value();
+        const indexValue = index.value() + k;
         const tracksSum = this.Songs.value().length - 1;
-        indexValue += k;
         if (0 <= indexValue && indexValue <= tracksSum) {
             index.value(indexValue, 'forcibly');
         }

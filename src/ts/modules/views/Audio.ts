@@ -15,7 +15,7 @@ export class Audio extends View<HTMLAudioElement> {
         },
         isPlay: {
             value: false,
-            callbacks: [ this.togglePlay ]
+            callbacks: [ this.switchPlay ]
         },
         currentVolume: {
             value: 0,
@@ -36,13 +36,24 @@ export class Audio extends View<HTMLAudioElement> {
             name: 'ended',
             block: this.container,
             callback: () => {
+                this.states.get('isPlay').value(false);
                 this.sender.sendMessage('ended');
             }
         },
         {
             name: 'loadeddata',
             block: this.container,
-            callback: () => this.sender.sendMessage('timeupdate')
+            callback: () => this.sender.sendMessage('loaded')
+        },
+        {
+            name: 'play',
+            block: this.container,
+            callback: () => this.sender.sendMessage('play')
+        },
+        {
+            name: 'pause',
+            block: this.container,
+            callback: () => this.sender.sendMessage('pause')
         }
     );
     readonly sender = this.setSender();
@@ -52,7 +63,7 @@ export class Audio extends View<HTMLAudioElement> {
     currentTime() {
         return this.containerProp('currentTime');
     }
-    togglePlay(is: boolean) {
+    switchPlay(is: boolean) {
         setTimeout(() =>{
             if (is) this.container.play()
             else this.container.pause();

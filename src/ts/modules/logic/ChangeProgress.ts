@@ -20,7 +20,10 @@ export class ChangeProgress extends Logic<Player> {
         }
     });
     readonly recipient = this.setRecipient(
-        { timeupdate: this.updateAll },
+        {
+            timeupdate: this.updateAll,
+            loaded: this.whenLoaded
+        },
         [
             this.Main.Audio.sender,
             this.Main.Switchtrack.sender
@@ -31,7 +34,7 @@ export class ChangeProgress extends Logic<Player> {
         let duration = this.Main.Audio.duration();
         duration = duration ? duration : 0;
         let progress = current / duration;
-        progress = progress ? progress : 0;
+        progress = progress ? progress : 0.00001;
         return {
             current: current,
             duration: duration,
@@ -41,6 +44,10 @@ export class ChangeProgress extends Logic<Player> {
     updateAll() {
         const { current, duration, progress } = this.getValues();
         this.ProgressBar.states.get('currentValue').value(progress, 'nobind');
+        this.updateTime(current, duration);
+    }
+    whenLoaded() {
+        const { current, duration } = this.getValues();
         this.updateTime(current, duration);
     }
     updateTime(current: number, duration: number) {

@@ -12,17 +12,16 @@ class TogglePlaying extends Logic<Player> {
     readonly isPlay = this.Main.Audio.states.get('isPlay');
     readonly recipient = this.setRecipient(
         {
-            toggle: this.togglePlaying,
-            switchIcon: () => this.PlayPause.switchCurrentIcon()
+            toggle: () => this.isPlay.value(!this.isPlay.value()),
+            play: () => this.PlayPause.states.get('currentIcon').value(1),
+            pause: () => this.PlayPause.states.get('currentIcon').value(0)
         },
         [
             this.PlayPause.sender,
-            this.Main.Switchtrack.sender
+            this.Main.Switchtrack.sender,
+            this.Main.Audio.sender
         ]
     );
-    togglePlaying() {
-        this.isPlay.value(!this.isPlay.value());
-    }
 }
 
 class ChangeVolume extends Logic<Player> {
@@ -35,13 +34,4 @@ class ChangeVolume extends Logic<Player> {
             reverseBinds: [ this.VolumeBarStates.get('currentValue') ]
         }
     });
-    readonly recipient = this.setRecipient(
-        { mounted: this.mounted },
-        [ this.VolumeBar.sender ]
-    );
-    mounted() {
-        setTimeout(() => {
-            this.VolumeBar.states.get('currentValue').value(0.5);
-        }, 0);
-    }
 }
